@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;510;590&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-authra-bg-light: #ffffff;
+  --color-authra-surface-light: #f8fafc;
+  --color-authra-text-light: #111522;
+  --color-authra-text-sec-light: #62666d;
+  --color-authra-border-light: #e2e8f0;
+
+  --color-authra-bg-dark: #000000;
+  --color-authra-surface-dark: #0D0F16;
+  --color-authra-text-dark: #F5F8FF;
+  --color-authra-text-sec-dark: #9AA8D6;
+  --color-authra-border-dark: #2A3155;
+
+  --color-brand-midnight: #000000;
+  --color-brand-steel: #5F6EB7;
+  --color-brand-periwinkle: #7387C5;
+  --color-brand-soft-sky: #92B8D4;
+  --color-brand-ice: #A8D3E8;
+
+  --font-inter: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --shadow-btn: rgba(115, 135, 197, 0.15) 0 4px 12px;
+  --shadow-btn-dark: rgba(115, 135, 197, 0.25) 0 4px 12px;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    font-family: var(--font-inter);
+    font-feature-settings: "cv01", "ss03";
+  }
+
+  body {
+    @apply bg-authra-bg-light text-authra-text-light transition-colors duration-300 antialiased overflow-x-hidden;
+  }
+
+  .dark body {
+    @apply bg-authra-bg-dark text-authra-text-dark;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-[590] leading-tight;
+  }
+
+  p {
+    @apply font-normal text-authra-text-sec-light text-lg m-0;
+  }
+
+  .dark p {
+    @apply text-authra-text-sec-dark;
+  }
+
+  code {
+    @apply font-mono bg-[#7387c5]/10 px-1.5 py-1 rounded text-brand-periwinkle text-sm;
+  }
+}
+
+@layer components {
+  .gradient-text {
+    @apply bg-gradient-to-b from-brand-ice via-brand-soft-sky to-brand-steel inline-block text-transparent bg-clip-text;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-7 py-3.5 bg-gradient-to-b from-brand-ice via-brand-soft-sky to-brand-steel text-white border-none rounded-2xl font-[510] text-base cursor-pointer shadow-btn transition-all duration-200 no-underline hover:brightness-110 hover:-translate-y-0.5 hover:shadow-[rgba(115,135,197,0.4)_0_8px_20px] dark:shadow-btn-dark;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-7 py-3.5 bg-transparent text-authra-text-sec-light border border-authra-border-light rounded-2xl font-[510] text-base cursor-pointer transition-all duration-200 no-underline hover:bg-[#7387c5]/5 hover:text-authra-text-light hover:border-brand-steel hover:-translate-y-0.5 dark:bg-white/2 dark:text-authra-text-sec-dark dark:border-authra-border-dark dark:hover:text-authra-text-dark;
+  }
+
+  .card {
+    @apply bg-authra-surface-light border border-authra-border-light rounded-[20px] p-10 transition-all duration-300 hover:border-brand-steel hover:-translate-y-1 dark:bg-authra-surface-dark dark:border-authra-border-dark;
+  }
+}
+
+/* Custom animations and layout components that aren't natively covered by simple tailwind utilities */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-1 {
+  animation-delay: 0.1s;
+  opacity: 0;
+}
+
+.delay-2 {
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+.delay-3 {
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+/* Marquee Animation & Utils */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 35s linear infinite;
+}
+
+.mask-fade-edges {
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
