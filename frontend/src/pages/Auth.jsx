@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, Building2, Phone, Globe, UploadCloud } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import horizontalLogo from '../assets/horziontal logo.png';
 import { axiosInstance } from '../config/api';
 
@@ -298,7 +298,7 @@ export default function Auth() {
                 </div>
                 {isLogin && (
                   <div className="flex justify-end pt-1">
-                    <a href="#" className="text-xs font-medium text-brand-steel hover:text-brand-ice transition-colors">Forgot password?</a>
+                    <Link to="/forgot-password" className="text-xs font-medium text-brand-steel hover:text-brand-ice transition-colors">Forgot password?</Link>
                   </div>
                 )}
               </div>
