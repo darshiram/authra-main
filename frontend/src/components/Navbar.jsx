@@ -71,7 +71,7 @@ export default function Navbar() {
     }
   };
 
-  const navLinks = ['Dashboard', 'Profile', 'Developers', 'Pricing'];
+  const navLinks = ['Dashboard', 'Profile', 'Partners', 'Pricing'];
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${isScrolled ? 'pt-2 md:pt-4' : 'pt-4 md:pt-6'}`}>
@@ -90,9 +90,9 @@ export default function Navbar() {
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link, index) => {
-              const isRoute = link === 'Dashboard' || link === 'Profile';
-              const path = link === 'Dashboard' ? '/dashboard' : link === 'Profile' ? (user ? `/user/${user.username || 'profile'}` : '/login') : `/#${link.toLowerCase()}`;
-              
+              const isRoute = link === 'Dashboard' || link === 'Profile' || link === 'Pricing';
+              const path = link === 'Dashboard' ? '/dashboard' : link === 'Profile' ? (user ? (user.accountType === 'organization' ? `/o/${user.username || 'profile'}` : `/user/${user.username || 'profile'}`) : '/login') : link === 'Pricing' ? '/pricing' : `/#${link.toLowerCase()}`;
+
               return (
                 <React.Fragment key={link}>
                   {isRoute ? (
@@ -121,15 +121,19 @@ export default function Navbar() {
             </button>
             {user ? (
               <div className="relative" ref={profileMenuRef}>
-                <button 
+                <button
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                   className="flex items-center gap-2 w-10 h-10 rounded-full bg-gradient-to-tr from-brand-steel to-brand-ice text-sm font-bold text-white shadow-md hover:shadow-[0_0_15px_rgba(115,135,197,0.4)] hover:scale-105 transition-all overflow-hidden"
                 >
-                  <div className="w-full h-full flex items-center justify-center">
-                    {user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 'U'}
-                  </div>
+                  {(user?.logoUrl || user?.profilePicture) ? (
+                    <img src={user.logoUrl || user.profilePicture} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      {user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U'}
+                    </div>
+                  )}
                 </button>
-                
+
                 {/* Dropdown Menu */}
                 <div className={`absolute right-0 mt-3 w-56 bg-white dark:bg-[#111522] border border-authra-border-light dark:border-[#2A3155] rounded-2xl shadow-xl overflow-hidden transition-all duration-200 origin-top-right ${isProfileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
                   <div className="p-4 border-b border-authra-border-light dark:border-[#2A3155]">
@@ -137,16 +141,26 @@ export default function Navbar() {
                     <p className="text-xs text-authra-text-sec-light dark:text-[#9AA8D6] truncate">{user.email}</p>
                   </div>
                   <div className="p-2">
-                    <Link 
-                      to={user.accountType === 'organization' ? '/dashboard' : `/user/${user.username || user.email?.split('@')[0] || 'profile'}`} 
+                    <Link
+                      to={user.accountType === 'organization' ? '/dashboard' : `/user/${user.username || user.email?.split('@')[0] || 'profile'}`}
                       onClick={() => setIsProfileMenuOpen(false)}
                       className="flex items-center gap-3 w-full p-2 text-sm text-authra-text-light dark:text-[#F5F8FF] hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors"
                     >
                       <UserIcon className="w-4 h-4 text-brand-steel" />
                       {user.accountType === 'organization' ? 'Dashboard' : 'My Profile'}
                     </Link>
-                    <Link 
-                      to="/settings" 
+                    {user.accountType === 'organization' && (
+                      <Link
+                        to={`/o/${user.username || 'profile'}`}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="flex items-center gap-3 w-full p-2 text-sm text-authra-text-light dark:text-[#F5F8FF] hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors"
+                      >
+                        <UserIcon className="w-4 h-4 text-brand-steel" />
+                        Public Profile
+                      </Link>
+                    )}
+                    <Link
+                      to="/settings"
                       onClick={() => setIsProfileMenuOpen(false)}
                       className="flex items-center gap-3 w-full p-2 text-sm text-authra-text-light dark:text-[#F5F8FF] hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors"
                     >
@@ -155,7 +169,7 @@ export default function Navbar() {
                     </Link>
                   </div>
                   <div className="p-2 border-t border-authra-border-light dark:border-[#2A3155]">
-                    <button 
+                    <button
                       onClick={handleLogout}
                       className="flex items-center gap-3 w-full p-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
                     >
@@ -193,9 +207,9 @@ export default function Navbar() {
       <div className={`md:hidden absolute top-full left-0 right-0 mt-4 mx-4 p-6 rounded-2xl bg-white/95 dark:bg-[#0D0F16]/95 backdrop-blur-xl border border-authra-border-light dark:border-authra-border-dark shadow-2xl transition-all duration-300 ease-in-out origin-top ${isOpen ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'}`}>
         <div className="flex flex-col gap-6">
           {navLinks.map((link) => {
-            const isRoute = link === 'Dashboard' || link === 'Profile';
-            const path = link === 'Dashboard' ? '/dashboard' : link === 'Profile' ? (user ? `/user/${user.username || 'profile'}` : '/login') : `/#${link.toLowerCase()}`;
-            
+            const isRoute = link === 'Dashboard' || link === 'Profile' || link === 'Pricing';
+            const path = link === 'Dashboard' ? '/dashboard' : link === 'Profile' ? (user ? (user.accountType === 'organization' ? `/o/${user.username || 'profile'}` : `/user/${user.username || 'profile'}`) : '/login') : link === 'Pricing' ? '/pricing' : `/#${link.toLowerCase()}`;
+
             return isRoute ? (
               <Link key={link} to={path} onClick={() => setIsOpen(false)} className="text-lg font-[510] text-authra-text-light dark:text-white hover:text-brand-periwinkle dark:hover:text-brand-ice transition-colors">
                 {link}
@@ -210,32 +224,46 @@ export default function Navbar() {
           {user ? (
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-4 px-4 py-3 bg-black/5 dark:bg-white/5 rounded-2xl mb-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-steel to-brand-ice flex items-center justify-center text-sm font-bold text-white shrink-0">
-                  {user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 'U'}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-steel to-brand-ice flex items-center justify-center text-sm font-bold text-white shrink-0 overflow-hidden">
+                  {(user?.logoUrl || user?.profilePicture) ? (
+                    <img src={user.logoUrl || user.profilePicture} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U'
+                  )}
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-sm font-medium text-authra-text-light dark:text-[#F5F8FF] truncate">{user.name || 'User'}</p>
                   <p className="text-xs text-authra-text-sec-light dark:text-[#9AA8D6] truncate">{user.email}</p>
                 </div>
               </div>
-              <Link 
-                to={user.accountType === 'organization' ? '/dashboard' : `/user/${user.username || user.email?.split('@')[0] || 'profile'}`} 
-                onClick={() => setIsOpen(false)} 
+              <Link
+                to={user.accountType === 'organization' ? '/dashboard' : `/user/${user.username || user.email?.split('@')[0] || 'profile'}`}
+                onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 py-3 px-4 rounded-xl text-authra-text-light dark:text-[#F5F8FF] font-[510] transition-colors hover:bg-black/5 dark:hover:bg-white/5"
               >
                 <UserIcon className="w-5 h-5 text-brand-steel" />
                 {user.accountType === 'organization' ? 'Dashboard' : 'My Profile'}
               </Link>
-              <Link 
-                to="/settings" 
-                onClick={() => setIsOpen(false)} 
+              {user.accountType === 'organization' && (
+                <Link
+                  to={`/o/${user.username || 'profile'}`}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-3 px-4 rounded-xl text-authra-text-light dark:text-[#F5F8FF] font-[510] transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                >
+                  <UserIcon className="w-5 h-5 text-brand-steel" />
+                  Public Profile
+                </Link>
+              )}
+              <Link
+                to="/settings"
+                onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 py-3 px-4 rounded-xl text-authra-text-light dark:text-[#F5F8FF] font-[510] transition-colors hover:bg-black/5 dark:hover:bg-white/5"
               >
                 <Settings className="w-5 h-5 text-brand-steel" />
                 Settings
               </Link>
-              <button 
-                onClick={() => { setIsOpen(false); handleLogout(); }} 
+              <button
+                onClick={() => { setIsOpen(false); handleLogout(); }}
                 className="flex items-center gap-3 py-3 px-4 rounded-xl text-red-600 dark:text-red-400 font-[510] transition-colors hover:bg-red-50 dark:hover:bg-red-500/10 w-full text-left"
               >
                 <LogOut className="w-5 h-5" />

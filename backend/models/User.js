@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
   },
+  profilePicture: String,
   bio: String,
   college: String,
   location: String,
@@ -52,6 +53,19 @@ const userSchema = new mongoose.Schema({
   linkedin: String,
   github: String,
   logoUrl: String,
+  aboutOrg: String,
+  gallery: [String],
+  
+  // Subscription fields
+  plan: {
+    type: String,
+    enum: ['free', 'pro', 'enterprise'],
+    default: 'free',
+  },
+  extraCertificates: {
+    type: Number,
+    default: 0
+  },
   
   // Roles (Admin, OrgOwner, User, etc)
   role: {

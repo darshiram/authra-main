@@ -28,6 +28,33 @@ export const issueCertificates = async (req, res) => {
       return res.status(400).json({ message: 'Template ID and recipients are required' });
     }
 
+    // Check plan limits
+    if (req.user.plan !== 'enterprise') {
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      
+      const currentMonthCount = await Certificate.countDocuments({
+        issuerId: req.user._id,
+        createdAt: { $gte: firstDayOfMonth, $lte: lastDayOfMonth }
+      });
+
+      const requestedCount = recipients.length;
+      let allowedCount = 0;
+
+      if (!req.user.plan || req.user.plan === 'free') {
+        allowedCount = 100;
+      } else if (req.user.plan === 'pro') {
+        allowedCount = 1000 + (req.user.extraCertificates || 0);
+      }
+
+      if (currentMonthCount + requestedCount > allowedCount) {
+        return res.status(403).json({ 
+          message: `Monthly limit reached. You can only issue ${Math.max(0, allowedCount - currentMonthCount)} more certificates this month. Please upgrade your plan or buy extra certificates.` 
+        });
+      }
+    }
+
     const issuedCertificates = [];
 
     // Process each recipient

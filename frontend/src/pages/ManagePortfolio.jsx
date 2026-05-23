@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, Loader2, ArrowLeft, Plus, Trash2, Folder, Award, Upload, FileText, CheckCircle2 } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Plus, Trash2, Folder, Award, Upload, FileText, CheckCircle2, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '../config/api';
 
@@ -14,6 +14,8 @@ export default function ManagePortfolio() {
 
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [platformCertificates, setPlatformCertificates] = useState([]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -21,6 +23,10 @@ export default function ManagePortfolio() {
         const res = await axiosInstance.get('/users/me');
         setProjects(res.data.projects || []);
         setCertificates(res.data.certificates || []);
+        setSkills(res.data.skills || []);
+
+        const resCerts = await axiosInstance.get('/certificates/my');
+        setPlatformCertificates(resCerts.data || []);
       } catch (error) {
         navigate('/login');
       } finally {
@@ -37,7 +43,8 @@ export default function ManagePortfolio() {
     try {
       await axiosInstance.put('/users/me', {
         projects,
-        certificates
+        certificates,
+        skills
       });
       setMessage({ type: 'success', text: 'Portfolio updated successfully!' });
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
@@ -105,6 +112,33 @@ export default function ManagePortfolio() {
     setCertificates(certificates.filter((_, i) => i !== index));
   };
 
+  const allSkills = new Set();
+  platformCertificates.forEach(cert => {
+    if (cert.additionalDetails?.skills) {
+      cert.additionalDetails.skills.split(',').forEach(s => {
+        const trimmed = s.trim();
+        if (trimmed) allSkills.add(trimmed);
+      });
+    }
+  });
+  certificates.forEach(cert => {
+    if (cert.skills && Array.isArray(cert.skills)) {
+      cert.skills.forEach(s => {
+        const trimmed = s.trim();
+        if (trimmed) allSkills.add(trimmed);
+      });
+    }
+  });
+  const availableSkills = Array.from(allSkills);
+
+  const toggleSkill = (skill) => {
+    if (skills.includes(skill)) {
+      setSkills(skills.filter(s => s !== skill));
+    } else {
+      setSkills([...skills, skill]);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-24 bg-authra-bg-light dark:bg-[#0D0F16]">
@@ -158,6 +192,12 @@ export default function ManagePortfolio() {
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'certificates' ? 'bg-authra-bg-light dark:bg-[#2A3155] text-authra-text-light dark:text-white shadow-sm' : 'text-authra-text-sec-light dark:text-[#9AA8D6] hover:text-authra-text-light dark:hover:text-white'}`}
           >
             <Award className="w-4 h-4" /> Certificates
+          </button>
+          <button 
+            onClick={() => setActiveTab('skills')}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'skills' ? 'bg-authra-bg-light dark:bg-[#2A3155] text-authra-text-light dark:text-white shadow-sm' : 'text-authra-text-sec-light dark:text-[#9AA8D6] hover:text-authra-text-light dark:hover:text-white'}`}
+          >
+            <Star className="w-4 h-4" /> Skills
           </button>
         </div>
 
@@ -299,6 +339,46 @@ export default function ManagePortfolio() {
                   ))
                 )}
               </AnimatePresence>
+            </div>
+          )}
+
+          {activeTab === 'skills' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-semibold text-authra-text-light dark:text-[#F5F8FF]">Top Skills</h2>
+              </div>
+              <p className="text-sm text-authra-text-sec-light dark:text-[#9AA8D6]">
+                Select your top skills from the ones validated in your certificates. These will be highlighted on your public profile.
+              </p>
+
+              {availableSkills.length === 0 ? (
+                <div className="bg-authra-bg-light dark:bg-[#111522] border border-authra-border-light dark:border-[#2A3155] rounded-2xl p-8 text-center">
+                  <p className="text-sm text-authra-text-sec-light dark:text-[#9AA8D6]">
+                    You haven't added any certificates with skills yet. Add some certificates to select your top skills!
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-authra-bg-light dark:bg-[#0D0F16] border border-authra-border-light dark:border-[#2A3155] rounded-2xl p-6">
+                  <div className="flex flex-wrap gap-3">
+                    {availableSkills.map((skill, i) => {
+                      const isSelected = skills.includes(skill);
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => toggleSkill(skill)}
+                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border ${
+                            isSelected 
+                              ? 'bg-brand-steel/10 border-brand-steel text-brand-steel dark:text-brand-ice shadow-[0_0_10px_rgba(115,135,197,0.2)]' 
+                              : 'bg-white dark:bg-[#111522] border-authra-border-light dark:border-[#2A3155] text-authra-text-sec-light dark:text-[#9AA8D6] hover:border-brand-steel/50 hover:text-authra-text-light dark:hover:text-[#F5F8FF]'
+                          }`}
+                        >
+                          {skill}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

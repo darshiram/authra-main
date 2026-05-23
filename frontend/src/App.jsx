@@ -13,6 +13,8 @@ import Auth from './pages/Auth';
 import Onboarding from './pages/Onboarding';
 import Settings from './pages/Settings';
 import ManagePortfolio from './pages/ManagePortfolio';
+import Pricing from './pages/Pricing';
+import OrgProfile from './pages/OrgProfile';
 
 function App() {
   return (
@@ -29,6 +31,7 @@ function App() {
             } />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/user/:username" element={<UserProfile />} />
+            <Route path="/o/:username" element={<OrgProfile />} />
             <Route path="/u/:username" element={<PublicProfile />} />
             <Route path="/u/:username/certificates" element={<PublicCertificates />} />
             <Route path="/verify/:credentialId" element={<VerifyCertificate />} />
@@ -37,6 +40,7 @@ function App() {
             <Route path="/signup" element={<Auth />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/manage-portfolio" element={
               <>
                 <Navbar />

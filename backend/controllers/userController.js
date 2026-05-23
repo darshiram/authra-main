@@ -24,6 +24,12 @@ export const getUserProfile = async (req, res) => {
       website: user.website,
       linkedin: user.linkedin,
       github: user.github,
+      profilePicture: user.profilePicture,
+      logoUrl: user.logoUrl,
+      aboutOrg: user.aboutOrg,
+      gallery: user.gallery,
+      plan: user.plan,
+      extraCertificates: user.extraCertificates,
     });
   } else {
     res.status(404).json({ message: 'User not found' });
@@ -40,6 +46,8 @@ export const updateUserProfile = async (req, res) => {
     if (user.accountType === 'organization') {
       user.orgName = req.body.name || user.orgName;
       user.mobileNo = req.body.mobileNo || user.mobileNo;
+      user.aboutOrg = req.body.aboutOrg !== undefined ? req.body.aboutOrg : user.aboutOrg;
+      user.gallery = req.body.gallery || user.gallery;
     } else {
       user.fullName = req.body.name || user.fullName;
       user.college = req.body.college || user.college;
@@ -53,6 +61,8 @@ export const updateUserProfile = async (req, res) => {
     user.website = req.body.website || user.website;
     user.linkedin = req.body.linkedin || user.linkedin;
     user.github = req.body.github || user.github;
+    if (req.body.profilePicture) user.profilePicture = req.body.profilePicture;
+    if (req.body.logoUrl) user.logoUrl = req.body.logoUrl;
     
     // Portfolio fields
     if (req.body.projects) user.projects = req.body.projects;
@@ -81,6 +91,12 @@ export const updateUserProfile = async (req, res) => {
       website: updatedUser.website,
       linkedin: updatedUser.linkedin,
       github: updatedUser.github,
+      profilePicture: updatedUser.profilePicture,
+      logoUrl: updatedUser.logoUrl,
+      aboutOrg: updatedUser.aboutOrg,
+      gallery: updatedUser.gallery,
+      plan: updatedUser.plan,
+      extraCertificates: updatedUser.extraCertificates,
     });
   } else {
     res.status(404).json({ message: 'User not found' });
@@ -120,7 +136,12 @@ export const getUserByUsername = async (req, res) => {
       certificates: user.certificates,
       linkedin: user.linkedin,
       github: user.github,
+      profilePicture: user.profilePicture,
       logoUrl: user.logoUrl,
+      aboutOrg: user.aboutOrg,
+      gallery: user.gallery,
+      plan: user.plan,
+      extraCertificates: user.extraCertificates,
       website: user.website,
       totalCertificates: 0
     });

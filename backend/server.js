@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import certificateRoutes from './routes/certificateRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import path from 'path';
 
 dotenv.config();
@@ -17,7 +18,11 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
 app.use(cookieParser());
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -29,6 +34,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/certificates', certificateRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 // Make uploads folder static
 const __dirname = path.resolve();

@@ -223,8 +223,12 @@ export default function PublicProfile() {
           <div className="lg:col-span-1 space-y-6">
             {/* Identity Card */}
             <div className="bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-[#2A3155] rounded-[20px] p-8 shadow-sm">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#A8D3E8] to-[#5F6EB7] flex items-center justify-center text-3xl font-bold text-white shadow-[0_4px_15px_rgba(115,135,197,0.25)] mb-6">
-                {user.avatar}
+              <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#A8D3E8] to-[#5F6EB7] flex items-center justify-center text-3xl font-bold text-white shadow-[0_4px_15px_rgba(115,135,197,0.25)] mb-6 overflow-hidden">
+                {(user.profilePicture || user.logoUrl) ? (
+                  <img src={user.profilePicture || user.logoUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  user.avatar
+                )}
               </div>
               <h1 className="text-2xl font-[590] text-authra-text-light dark:text-[#F5F8FF] tracking-tight mb-1">
                 {user.name || 'User'}
@@ -232,10 +236,12 @@ export default function PublicProfile() {
               <p className="text-brand-steel font-medium mb-4">@{user.username || user.email?.split('@')[0] || 'user'}</p>
               
               <div className="space-y-3 text-sm text-authra-text-sec-light dark:text-[#9AA8D6] mb-6">
-                <div className="flex items-center gap-3">
-                  <Briefcase className="w-4 h-4" />
-                  <span>{user.role}</span>
-                </div>
+                {user.role && user.role !== 'User' && (
+                  <div className="flex items-center gap-3">
+                    <Briefcase className="w-4 h-4" />
+                    <span>{user.role}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4" />
                   <span>{user.location}</span>

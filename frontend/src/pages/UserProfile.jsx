@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import PDFViewer from '../components/PDFViewer';
-import { ShieldCheck, Award, Calendar, Share2, ExternalLink, Loader2, Link as LinkIcon, Check, Eye } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldCheck, Award, Calendar, Share2, ExternalLink, Loader2, Link as LinkIcon, Check, Eye, UploadCloud, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import DownloadOffscreenButton from '../components/DownloadOffscreenButton';
@@ -31,7 +32,10 @@ export default function UserProfile() {
   const [error, setError] = useState('');
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isProfilePicModalOpen, setIsProfilePicModalOpen] = useState(false);
+  const [isUploadingPic, setIsUploadingPic] = useState(false);
   const shareRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -68,6 +72,50 @@ export default function UserProfile() {
     };
     fetchUser();
   }, [username, navigate]);
+
+  const handleProfilePicUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setIsUploadingPic(true);
+      const res = await axiosInstance.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const newPicUrl = res.data.url;
+      
+      // Update user
+      await axiosInstance.put('/users/me', { profilePicture: newPicUrl });
+      setUser(prev => ({ ...prev, profilePicture: newPicUrl }));
+      setIsProfilePicModalOpen(false);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error uploading profile picture');
+    } finally {
+      setIsUploadingPic(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveProfilePic = async () => {
+    try {
+      setIsUploadingPic(true);
+      await axiosInstance.put('/users/me', { profilePicture: '' });
+      setUser(prev => ({ ...prev, profilePicture: '' }));
+      setIsProfilePicModalOpen(false);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error removing profile picture');
+    } finally {
+      setIsUploadingPic(false);
+    }
+  };
 
   const platformCertificates = platformCerts.map((cert) => ({
     id: cert.credentialId,
@@ -154,8 +202,18 @@ export default function UserProfile() {
 
             <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8">
               {/* Avatar */}
-              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-tr from-brand-steel to-brand-ice flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl shrink-0">
-                {user.avatar}
+              <div 
+                className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-tr from-brand-steel to-brand-ice flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl shrink-0 cursor-pointer group relative overflow-hidden"
+                onClick={() => setIsProfilePicModalOpen(true)}
+              >
+                {user.profilePicture ? (
+                  <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  user.avatar
+                )}
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  <span className="text-sm font-medium text-white">Edit</span>
+                </div>
               </div>
 
               {/* Info */}
@@ -170,10 +228,10 @@ export default function UserProfile() {
                     </p>
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-2 md:mt-0">
                     <button 
                       onClick={() => navigate('/manage-portfolio')}
-                      className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full border border-brand-steel/50 dark:border-brand-steel text-sm font-[510] text-authra-text-light dark:text-brand-ice hover:bg-brand-steel/10 dark:hover:bg-brand-steel/20 hover:shadow-[0_0_15px_rgba(95,110,183,0.3)] transition-all duration-300"
+                      className="flex items-center gap-2 px-4 py-2 rounded-full border border-brand-steel/50 dark:border-brand-steel text-sm font-[510] text-authra-text-light dark:text-brand-ice hover:bg-brand-steel/10 dark:hover:bg-brand-steel/20 hover:shadow-[0_0_15px_rgba(95,110,183,0.3)] transition-all duration-300"
                     >
                       <Award className="w-4 h-4" />
                       Manage Portfolio
@@ -182,14 +240,14 @@ export default function UserProfile() {
                     <div className="relative" ref={shareRef}>
                       <button 
                         onClick={() => setIsShareOpen(!isShareOpen)}
-                        className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full border border-authra-border-light dark:border-authra-border-dark text-sm font-medium text-authra-text-light dark:text-white hover:bg-authra-bg-light dark:hover:bg-white/5 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full border border-authra-border-light dark:border-authra-border-dark text-sm font-medium text-authra-text-light dark:text-white hover:bg-authra-bg-light dark:hover:bg-white/5 transition-colors"
                       >
                         <Share2 className="w-4 h-4" />
                         Share Profile
                       </button>
                     
                     {/* Share Dropdown Menu */}
-                    <div className={`absolute right-0 mt-3 w-64 bg-white dark:bg-[#111522] border border-authra-border-light dark:border-[#2A3155] rounded-2xl shadow-xl overflow-hidden transition-all duration-200 origin-top-right z-50 ${isShareOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                    <div className={`absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-0 mt-3 w-64 bg-white dark:bg-[#111522] border border-authra-border-light dark:border-[#2A3155] rounded-2xl shadow-xl overflow-hidden transition-all duration-200 origin-top z-50 ${isShareOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
                       <div className="p-4 border-b border-authra-border-light dark:border-[#2A3155]">
                         <p className="text-sm font-semibold text-authra-text-light dark:text-[#F5F8FF] mb-1">Share your public profile</p>
                         <p className="text-xs text-authra-text-sec-light dark:text-[#9AA8D6]">Anyone with this link can view your credentials.</p>
@@ -231,9 +289,11 @@ export default function UserProfile() {
                   </div>
                 </div>
 
-                <p className="text-authra-text-light dark:text-white font-medium mb-3">
-                  {user.role}
-                </p>
+                {user.role && user.role !== 'User' && (
+                  <p className="text-authra-text-light dark:text-white font-medium mb-3">
+                    {user.role}
+                  </p>
+                )}
                 <p className="text-sm text-authra-text-sec-light dark:text-authra-text-sec-dark leading-relaxed max-w-2xl mb-8">
                   {user.bio}
                 </p>
@@ -242,7 +302,7 @@ export default function UserProfile() {
                 <div className="flex items-center justify-center md:justify-start gap-8">
                   <div className="text-center md:text-left">
                     <p className="text-3xl font-bold text-authra-text-light dark:text-white mb-1">
-                      {user.totalCertificates}
+                      {certificates.filter(c => c.verified).length}
                     </p>
                     <p className="text-xs text-authra-text-sec-light dark:text-authra-text-sec-dark font-medium uppercase tracking-wider">
                       Verified Credentials
@@ -251,7 +311,7 @@ export default function UserProfile() {
                   <div className="w-px h-12 bg-authra-border-light dark:bg-authra-border-dark"></div>
                   <div className="text-center md:text-left">
                     <p className="text-3xl font-bold text-authra-text-light dark:text-white mb-1">
-                      {certificates.reduce((acc, curr) => acc + curr.skills.length, 0)}
+                      {new Set(certificates.filter(c => c.verified).flatMap(c => c.skills)).size}
                     </p>
                     <p className="text-xs text-authra-text-sec-light dark:text-authra-text-sec-dark font-medium uppercase tracking-wider">
                       Validated Skills
@@ -355,6 +415,59 @@ export default function UserProfile() {
 
         </div>
       </main>
+
+      {/* Profile Picture Modal */}
+      <AnimatePresence>
+        {isProfilePicModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-authra-border-dark rounded-2xl shadow-xl overflow-hidden p-6 relative"
+            >
+              <h3 className="text-xl font-bold text-authra-text-light dark:text-white mb-6 text-center">Profile Picture</h3>
+              
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingPic}
+                  className="w-full py-3 bg-brand-steel hover:brightness-110 text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isUploadingPic ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-5 h-5" />}
+                  {user?.profilePicture ? 'Change Picture' : 'Add Picture'}
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleProfilePicUpload} 
+                  accept="image/jpeg,image/png,image/jpg" 
+                  className="hidden" 
+                />
+                
+                {user?.profilePicture && (
+                  <button 
+                    onClick={handleRemoveProfilePic}
+                    disabled={isUploadingPic}
+                    className="w-full py-3 bg-red-500/10 text-red-600 dark:text-red-500 hover:bg-red-500/20 rounded-xl font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Remove Picture
+                  </button>
+                )}
+                
+                <button 
+                  onClick={() => setIsProfilePicModalOpen(false)}
+                  disabled={isUploadingPic}
+                  className="w-full py-3 bg-authra-bg-light dark:bg-[#111522] hover:bg-authra-border-light/50 dark:hover:bg-[#2A3155] text-authra-text-sec-light dark:text-white rounded-xl font-medium transition-all mt-2"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <Footer />
     </>
