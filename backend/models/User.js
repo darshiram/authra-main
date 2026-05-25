@@ -24,6 +24,17 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
   },
+  // OAuth
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  githubId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
   profilePicture: String,
   bio: String,
   college: String,

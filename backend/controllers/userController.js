@@ -30,6 +30,8 @@ export const getUserProfile = async (req, res) => {
       gallery: user.gallery,
       plan: user.plan,
       extraCertificates: user.extraCertificates,
+      hasGoogleLinked: !!user.googleId,
+      hasGithubLinked: !!user.githubId,
     });
   } else {
     res.status(404).json({ message: 'User not found' });

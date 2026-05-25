@@ -34,14 +34,16 @@ const careerGoals = [
 ];
 
 export default function Onboarding() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
 
   // Form State
   const [formData, setFormData] = useState({
-    fullName: '',
+    fullName: location.state?.fullName || '',
     username: '',
     college: '',
     degree: '',
@@ -73,26 +75,30 @@ export default function Onboarding() {
     }
   };
 
-  const location = useLocation();
-
   const finishOnboarding = async () => {
     setIsLoading(true);
     
     try {
       const email = location.state?.email;
       const password = location.state?.password;
+      const googleToken = location.state?.googleToken;
+      const githubToken = location.state?.githubToken;
+      const accountType = location.state?.accountType || 'user';
       
-      if (!email || !password) {
+      if (!email) {
         navigate('/signup');
         return;
       }
 
       const payload = {
-        accountType: 'user',
+        accountType,
         email,
-        password,
         ...formData
       };
+
+      if (googleToken) payload.googleToken = googleToken;
+      else if (githubToken) payload.githubToken = githubToken;
+      else payload.password = password;
 
       const res = await axiosInstance.post('/auth/register', payload);
       navigate(`/user/${res.data.username || formData.username}`);

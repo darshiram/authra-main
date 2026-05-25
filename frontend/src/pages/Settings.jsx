@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Save, User, MapPin, Briefcase, FileText, Globe, Loader2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '../config/api';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const GithubIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -60,7 +61,55 @@ export default function Settings() {
       }
     };
     fetchProfile();
+    
+    // Check for GitHub OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      const linkGithubCallback = async (code) => {
+        try {
+          await axiosInstance.post('/auth/link/github', { 
+            code,
+            redirectUri: window.location.origin + '/settings'
+          });
+          setUser(prev => ({ ...prev, hasGithubLinked: true }));
+          setMessage({ type: 'success', text: 'GitHub account linked successfully!' });
+          setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+        } catch (err) {
+          setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to link GitHub account' });
+        } finally {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      };
+      linkGithubCallback(code);
+    }
   }, [navigate]);
+
+  const handleLinkGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        await axiosInstance.post('/auth/link/g-login', { 
+          token: tokenResponse.access_token,
+          tokenResponse: tokenResponse 
+        });
+        setUser(prev => ({ ...prev, hasGoogleLinked: true }));
+        setMessage({ type: 'success', text: 'Google account linked successfully!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      } catch (err) {
+        setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to link Google account' });
+      }
+    },
+    onError: (errorResponse) => {
+      console.error("Google Link Error:", errorResponse);
+      setMessage({ type: 'error', text: "Google link was cancelled or failed. Please try again." });
+    }
+  });
+
+  const handleLinkGithub = () => {
+    const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+    const redirectUri = window.location.origin + '/settings';
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email`;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -210,6 +259,51 @@ export default function Settings() {
                   </div>
                 </div>
 
+              </div>
+            </section>
+
+            <hr className="border-authra-border-light dark:border-[#2A3155]" />
+
+            {/* Linked Accounts Section */}
+            <section>
+              <h2 className="text-xl font-semibold text-authra-text-light dark:text-[#F5F8FF] mb-4">Linked Accounts</h2>
+              <p className="text-sm text-authra-text-sec-light dark:text-[#9AA8D6] mb-4">
+                Link your external accounts to use them for signing in.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                {user?.hasGoogleLinked ? (
+                  <div className="flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 font-medium rounded-xl py-2.5 px-6 cursor-default">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="currentColor"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.15v2.84C3.99 20.53 7.7 23 12 23z" fill="currentColor"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.15C1.43 8.55 1 10.22 1 12s.43 3.45 1.15 4.93l3.69-2.84z" fill="currentColor"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.15 7.07l3.69 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="currentColor"/>
+                    </svg>
+                    Google Connected
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => handleLinkGoogle()} className="flex items-center justify-center gap-2 bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-[#2A3155] text-authra-text-light dark:text-[#F5F8FF] font-medium rounded-xl py-2.5 px-6 hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.15v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.15C1.43 8.55 1 10.22 1 12s.43 3.45 1.15 4.93l3.69-2.84z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.15 7.07l3.69 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Link Google
+                  </button>
+                )}
+                
+                {user?.hasGithubLinked ? (
+                  <div className="flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 font-medium rounded-xl py-2.5 px-6 cursor-default">
+                    <GithubIcon className="w-5 h-5" />
+                    GitHub Connected
+                  </div>
+                ) : (
+                  <button type="button" onClick={handleLinkGithub} className="flex items-center justify-center gap-2 bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-[#2A3155] text-authra-text-light dark:text-[#F5F8FF] font-medium rounded-xl py-2.5 px-6 hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                    <GithubIcon className="w-5 h-5" />
+                    Link GitHub
+                  </button>
+                )}
               </div>
             </section>
 

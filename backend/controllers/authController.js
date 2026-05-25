@@ -2,6 +2,10 @@ import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 import sendEmail from '../utils/sendEmail.js';
 import crypto from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
+import axios from 'axios';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // @desc    Auth user/org & get token
 // @route   POST /api/v1/auth/login
@@ -37,7 +41,8 @@ export const login = async (req, res) => {
 export const register = async (req, res) => {
   const { 
     accountType, email, password, orgName, mobileNo, website, linkedin,
-    fullName, username, college, degree, branch, year, selectedInterests, selectedGoals, github, portfolio, bio, location
+    fullName, username, college, degree, branch, year, selectedInterests, selectedGoals, github, portfolio, bio, location,
+    googleToken, githubToken
   } = req.body;
 
   try {
@@ -47,10 +52,45 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    let verifiedEmail = email;
+    let verifiedName = fullName;
+    let googleId = undefined;
+    let githubId = undefined;
+    let profilePicture = undefined;
+    let finalPassword = password;
+
+    if (googleToken) {
+      // Verify Google Token
+      const ticket = await client.verifyIdToken({
+        idToken: googleToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      verifiedEmail = payload.email;
+      verifiedName = payload.name;
+      profilePicture = payload.picture;
+      googleId = payload.sub;
+      finalPassword = crypto.randomBytes(12).toString('hex') + 'A1!';
+    } else if (githubToken) {
+      // Verify GitHub Token
+      const userResponse = await axios.get('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${githubToken}` },
+      });
+      const emailResponse = await axios.get('https://api.github.com/user/emails', {
+        headers: { Authorization: `Bearer ${githubToken}` },
+      });
+      const primaryEmailObj = emailResponse.data.find(e => e.primary) || emailResponse.data[0];
+      verifiedEmail = primaryEmailObj.email;
+      verifiedName = userResponse.data.name || userResponse.data.login;
+      profilePicture = userResponse.data.avatar_url;
+      githubId = userResponse.data.id.toString();
+      finalPassword = crypto.randomBytes(12).toString('hex') + 'A1!';
+    }
+
     const user = await User.create({
       accountType: accountType || 'user',
-      email,
-      password,
+      email: verifiedEmail,
+      password: finalPassword,
       // Org fields
       orgName: accountType === 'organization' ? orgName : undefined,
       mobileNo: accountType === 'organization' ? mobileNo : undefined,
@@ -58,16 +98,39 @@ export const register = async (req, res) => {
       linkedin: linkedin || undefined,
       role: accountType === 'organization' ? 'OrgOwner' : 'User',
       // User fields
-      fullName,
+      fullName: verifiedName,
       username,
       college,
+      degree,
+      branch,
+      year,
       bio,
       location,
       github,
-      skills: selectedInterests || []
+      skills: selectedInterests || [],
+      profilePicture,
+      googleId,
+      githubId
     });
 
     if (user) {
+      if (googleToken || githubToken) {
+        // Send welcome email with generated password for OAuth signups
+        const provider = googleToken ? 'Google' : 'GitHub';
+        const message = `Welcome to Authra! Your account has been created via ${provider}. Your temporary password is: ${finalPassword}\nPlease change it after logging in.`;
+        const htmlMessage = `<p>Welcome to Authra! Your account has been created via ${provider}.</p><p>Your temporary password is: <strong>${finalPassword}</strong></p><p>Please change it after logging in.</p>`;
+        try {
+          await sendEmail({
+            email: user.email,
+            subject: 'Welcome to Authra - Your Account Password',
+            message,
+            html: htmlMessage,
+          });
+        } catch (err) {
+          console.error('Failed to send welcome email', err);
+        }
+      }
+
       generateToken(res, user._id);
 
       res.status(201).json({
@@ -190,5 +253,216 @@ export const resetPassword = async (req, res) => {
     res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Auth with Google
+// @route   POST /api/v1/auth/google
+// @access  Public
+export const googleAuth = async (req, res) => {
+  const { token, tokenResponse, accountType } = req.body;
+  try {
+    const actualToken = token || tokenResponse?.access_token || tokenResponse?.credential;
+    
+    if (!actualToken) {
+      return res.status(400).json({ message: 'No token provided', details: req.body });
+    }
+
+    let email, name, sub, picture;
+
+    // A JWT id_token has 3 parts separated by dots
+    if (actualToken.split('.').length === 3) {
+      const ticket = await client.verifyIdToken({
+        idToken: actualToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      email = payload.email;
+      name = payload.name;
+      sub = payload.sub;
+      picture = payload.picture;
+    } else {
+      // It's an access_token. Use v1/userinfo which is more reliable for raw access tokens.
+      const response = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${actualToken}`, {
+        headers: { Authorization: `Bearer ${actualToken}`, Accept: 'application/json' }
+      });
+      email = response.data.email;
+      name = response.data.name;
+      sub = response.data.id; // v1 uses 'id' instead of 'sub'
+      picture = response.data.picture;
+    }
+
+    let user = await User.findOne({ $or: [{ googleId: sub }, { email }] });
+
+    if (!user) {
+      // User does not exist, return flag to navigate to onboarding
+      return res.status(200).json({
+        isNewUser: true,
+        email,
+        name,
+        picture,
+        googleToken: actualToken
+      });
+    } else if (!user.googleId) {
+      user.googleId = sub;
+      await user.save();
+    }
+
+    generateToken(res, user._id);
+    res.json({
+      _id: user._id,
+      accountType: user.accountType,
+      email: user.email,
+      role: user.role,
+      name: user.accountType === 'organization' ? user.orgName : user.fullName,
+      username: user.username,
+    });
+  } catch (error) {
+    console.error('Google Auth Error:', error.response?.data || error.message);
+    res.status(401).json({ 
+      message: 'Google auth failed', 
+      error: error.message,
+      googleError: error.response?.data 
+    });
+  }
+};
+
+// @desc    Auth with GitHub
+// @route   POST /api/v1/auth/github
+// @access  Public
+export const githubAuth = async (req, res) => {
+  const { code, accountType, redirectUri } = req.body;
+  try {
+    const tokenResponse = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+        redirect_uri: redirectUri
+      },
+      { headers: { Accept: 'application/json' } }
+    );
+    const accessToken = tokenResponse.data.access_token;
+
+    if (!accessToken) {
+      return res.status(400).json({ message: 'Invalid GitHub code' });
+    }
+
+    const userResponse = await axios.get('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const githubUser = userResponse.data;
+
+    const emailResponse = await axios.get('https://api.github.com/user/emails', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const primaryEmailObj = emailResponse.data.find(e => e.primary) || emailResponse.data[0];
+    const email = primaryEmailObj.email;
+
+    let user = await User.findOne({ $or: [{ githubId: githubUser.id.toString() }, { email }] });
+
+    if (!user) {
+      // User does not exist, return flag to navigate to onboarding
+      return res.status(200).json({
+        isNewUser: true,
+        email,
+        name: githubUser.name || githubUser.login,
+        picture: githubUser.avatar_url,
+        githubToken: accessToken
+      });
+    } else if (!user.githubId) {
+      user.githubId = githubUser.id.toString();
+      await user.save();
+    }
+
+    generateToken(res, user._id);
+    res.json({
+      _id: user._id,
+      accountType: user.accountType,
+      email: user.email,
+      role: user.role,
+      name: user.accountType === 'organization' ? user.orgName : user.fullName,
+      username: user.username,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'GitHub auth failed', error: error.message });
+  }
+};
+
+// @desc    Link Google Account
+// @route   POST /api/v1/auth/link/google
+// @access  Private
+export const linkGoogle = async (req, res) => {
+  const { token, tokenResponse } = req.body;
+  try {
+    const actualToken = token || tokenResponse?.access_token || tokenResponse?.credential;
+    
+    if (!actualToken) {
+      return res.status(400).json({ message: 'No token provided' });
+    }
+
+    let sub;
+    if (actualToken.split('.').length === 3) {
+      const ticket = await client.verifyIdToken({
+        idToken: actualToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      sub = ticket.getPayload().sub;
+    } else {
+      const response = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${actualToken}`, {
+        headers: { Authorization: `Bearer ${actualToken}`, Accept: 'application/json' }
+      });
+      sub = response.data.id;
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.googleId = sub;
+    await user.save();
+
+    res.json({ success: true, message: 'Google account linked successfully' });
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid Google token', error: error.message });
+  }
+};
+
+// @desc    Link GitHub Account
+// @route   POST /api/v1/auth/link/github
+// @access  Private
+export const linkGithub = async (req, res) => {
+  const { code, redirectUri } = req.body;
+  try {
+    const tokenResponse = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+        redirect_uri: redirectUri
+      },
+      { headers: { Accept: 'application/json' } }
+    );
+    const accessToken = tokenResponse.data.access_token;
+
+    if (!accessToken) {
+      return res.status(400).json({ message: 'Invalid GitHub code' });
+    }
+
+    const userResponse = await axios.get('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const githubUser = userResponse.data;
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.githubId = githubUser.id.toString();
+    await user.save();
+
+    res.json({ success: true, message: 'GitHub account linked successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'GitHub linking failed', error: error.message });
   }
 };
