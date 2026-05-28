@@ -1,6 +1,7 @@
 import Certificate from '../models/Certificate.js';
 import User from '../models/User.js';
 import crypto from 'crypto';
+import sendEmail from '../utils/sendEmail.js';
 
 // Generate a unique credential ID like AUT-8X92-MLK1-009A
 const generateCredentialId = () => {
@@ -83,6 +84,54 @@ export const issueCertificates = async (req, res) => {
 
       await newCert.save();
       issuedCertificates.push(newCert);
+    }
+
+    // Send emails
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    // Email to Organization
+    sendEmail({
+      email: req.user.email,
+      subject: `Certificate Issuance Confirmation`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+          <div style="background-color: #10b981; padding: 20px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0;">Certificates Issued Successfully</h2>
+          </div>
+          <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+            <p>Hi ${req.user.name || req.user.username},</p>
+            <p>You have successfully issued <strong>${issuedCertificates.length}</strong> certificate(s).</p>
+            <p>Thank you for using Authra!</p>
+          </div>
+        </div>
+      `
+    }).catch(err => console.error("Failed to send organization email:", err));
+
+    // Email to Recipients
+    for (const cert of issuedCertificates) {
+      const verifyUrl = `${frontendUrl}/verify/${cert.credentialId}`;
+      const title = cert.additionalDetails?.title || cert.eventName || 'Certificate';
+      
+      sendEmail({
+        email: cert.recipientEmail,
+        subject: `You have received a new certificate: ${title}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+            <div style="background-color: #0f172a; padding: 20px; text-align: center;">
+              <h2 style="color: #ffffff; margin: 0;">${req.user.name || req.user.username} issued you a certificate!</h2>
+            </div>
+            <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+              <p>Hi ${cert.recipientName},</p>
+              <p>You have been awarded the <strong>${title}</strong> certificate.</p>
+              <p>You can view, verify, and download your certificate using the link below:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${verifyUrl}" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Certificate</a>
+              </div>
+              <p>Credential ID: <code>${cert.credentialId}</code></p>
+            </div>
+          </div>
+        `
+      }).catch(err => console.error("Failed to send recipient email:", err));
     }
 
     res.status(201).json({

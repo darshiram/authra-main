@@ -86,7 +86,11 @@ export default function OrgProfile() {
           <div className="relative mb-16">
             {/* Banner Background */}
             <div className="rounded-3xl overflow-hidden bg-gradient-to-tr from-brand-steel/20 to-brand-ice/20 h-48 md:h-64 border border-authra-border-light dark:border-authra-border-dark relative">
-              <div className="absolute inset-0 backdrop-blur-[2px]"></div>
+              {org.bannerUrl ? (
+                <img src={org.bannerUrl} alt="Organization Banner" className="w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 backdrop-blur-[2px]"></div>
+              )}
             </div>
 
             {/* Logo Avatar overlapping cover */}

@@ -19,6 +19,33 @@ export const login = async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       generateToken(res, user._id);
 
+      // Send login alert email
+      const userAgent = req.headers['user-agent'] || 'Unknown Device';
+      const ipAddress = req.ip || req.socket.remoteAddress || 'Unknown IP';
+      
+      sendEmail({
+        email: user.email,
+        subject: 'New login to your Authra account',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+            <div style="background-color: #0D0F16; padding: 20px; text-align: center;">
+              <h2 style="color: #ffffff; margin: 0;">New Login Detected</h2>
+            </div>
+            <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+              <p>Hi ${user.fullName || user.orgName || user.username || 'User'},</p>
+              <p>We noticed a new login to your Authra account.</p>
+              <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 5px 0;"><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+                <p style="margin: 5px 0;"><strong>IP Address:</strong> ${ipAddress}</p>
+                <p style="margin: 5px 0;"><strong>Device/Browser:</strong> ${userAgent}</p>
+              </div>
+              <p>If this was you, you can safely ignore this email.</p>
+              <p>If you didn't log in recently, please reset your password immediately and secure your account.</p>
+            </div>
+          </div>
+        `
+      }).catch(err => console.error("Failed to send login alert:", err));
+
       res.json({
         _id: user._id,
         accountType: user.accountType,
@@ -250,6 +277,24 @@ export const resetPassword = async (req, res) => {
 
     await user.save();
 
+    // Password changed email
+    sendEmail({
+      email: user.email,
+      subject: 'Your Authra password has been changed',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+          <div style="background-color: #0D0F16; padding: 20px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0;">Password Successfully Changed</h2>
+          </div>
+          <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+            <p>Hi ${user.fullName || user.orgName || user.username || 'User'},</p>
+            <p>Your password for your Authra account has been successfully updated.</p>
+            <p>If you did not make this change, please contact support immediately to secure your account.</p>
+          </div>
+        </div>
+      `
+    }).catch(err => console.error("Failed to send password changed email:", err));
+
     res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -309,6 +354,34 @@ export const googleAuth = async (req, res) => {
     }
 
     generateToken(res, user._id);
+
+    // Send login alert email
+    const userAgent = req.headers['user-agent'] || 'Unknown Device';
+    const ipAddress = req.ip || req.socket?.remoteAddress || 'Unknown IP';
+    
+    sendEmail({
+      email: user.email,
+      subject: 'New login to your Authra account (via Google)',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+          <div style="background-color: #0D0F16; padding: 20px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0;">New Login Detected</h2>
+          </div>
+          <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+            <p>Hi ${user.fullName || user.orgName || user.username || 'User'},</p>
+            <p>We noticed a new login to your Authra account using Google Authentication.</p>
+            <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+              <p style="margin: 5px 0;"><strong>IP Address:</strong> ${ipAddress}</p>
+              <p style="margin: 5px 0;"><strong>Device/Browser:</strong> ${userAgent}</p>
+            </div>
+            <p>If this was you, you can safely ignore this email.</p>
+            <p>If you didn't log in recently, please secure your Google and Authra accounts immediately.</p>
+          </div>
+        </div>
+      `
+    }).catch(err => console.error("Failed to send login alert:", err));
+
     res.json({
       _id: user._id,
       accountType: user.accountType,
@@ -377,6 +450,34 @@ export const githubAuth = async (req, res) => {
     }
 
     generateToken(res, user._id);
+
+    // Send login alert email
+    const userAgent = req.headers['user-agent'] || 'Unknown Device';
+    const ipAddress = req.ip || req.socket?.remoteAddress || 'Unknown IP';
+    
+    sendEmail({
+      email: user.email,
+      subject: 'New login to your Authra account (via GitHub)',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+          <div style="background-color: #0D0F16; padding: 20px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0;">New Login Detected</h2>
+          </div>
+          <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+            <p>Hi ${user.fullName || user.orgName || user.username || 'User'},</p>
+            <p>We noticed a new login to your Authra account using GitHub Authentication.</p>
+            <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+              <p style="margin: 5px 0;"><strong>IP Address:</strong> ${ipAddress}</p>
+              <p style="margin: 5px 0;"><strong>Device/Browser:</strong> ${userAgent}</p>
+            </div>
+            <p>If this was you, you can safely ignore this email.</p>
+            <p>If you didn't log in recently, please secure your GitHub and Authra accounts immediately.</p>
+          </div>
+        </div>
+      `
+    }).catch(err => console.error("Failed to send login alert:", err));
+
     res.json({
       _id: user._id,
       accountType: user.accountType,

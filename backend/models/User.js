@@ -63,8 +63,9 @@ const userSchema = new mongoose.Schema({
   website: String,
   linkedin: String,
   github: String,
-  logoUrl: String,
-  aboutOrg: String,
+  logoUrl: { type: String, default: '' },
+  bannerUrl: { type: String, default: '' },
+  aboutOrg: { type: String },
   gallery: [String],
   
   // Subscription fields
@@ -72,6 +73,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['free', 'pro', 'enterprise'],
     default: 'free',
+  },
+  planExpiryDate: {
+    type: Date,
+    default: null
   },
   extraCertificates: {
     type: Number,

@@ -54,7 +54,9 @@ export default function VerifyCertificate() {
     const data = {
       issuerName: certificate.issuerId?.name || 'Organization',
       recipientName: certificate.recipientName,
-      title: certificate.eventName || 'Certificate of Completion',
+      title: certificate.additionalDetails?.title || certificate.eventName || 'Certificate of Completion',
+      eventName: certificate.additionalDetails?.eventName,
+      rank: certificate.additionalDetails?.rank || '',
       skills: certificate.additionalDetails?.skills,
       issueDate: new Date(certificate.issueDate).toLocaleDateString(),
       credentialId: certificate.credentialId

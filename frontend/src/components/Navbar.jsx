@@ -71,7 +71,7 @@ export default function Navbar() {
     }
   };
 
-  const navLinks = ['Dashboard', 'Profile', 'Partners', 'Pricing'];
+  const navLinks = ['Dashboard', 'Profile', 'Partners', 'Pricing', 'About'];
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${isScrolled ? 'pt-2 md:pt-4' : 'pt-4 md:pt-6'}`}>
@@ -90,8 +90,8 @@ export default function Navbar() {
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link, index) => {
-              const isRoute = link === 'Dashboard' || link === 'Profile' || link === 'Pricing';
-              const path = link === 'Dashboard' ? '/dashboard' : link === 'Profile' ? (user ? (user.accountType === 'organization' ? `/o/${user.username || 'profile'}` : `/user/${user.username || 'profile'}`) : '/login') : link === 'Pricing' ? '/pricing' : `/#${link.toLowerCase()}`;
+              const isRoute = link === 'Dashboard' || link === 'Profile' || link === 'Pricing' || link === 'About';
+              const path = link === 'Dashboard' ? '/dashboard' : link === 'Profile' ? (user ? (user.accountType === 'organization' ? `/o/${user.username || 'profile'}` : `/user/${user.username || 'profile'}`) : '/login') : link === 'Pricing' ? '/pricing' : link === 'About' ? '/about' : `/#${link.toLowerCase()}`;
 
               return (
                 <React.Fragment key={link}>
@@ -207,8 +207,8 @@ export default function Navbar() {
       <div className={`md:hidden absolute top-full left-0 right-0 mt-4 mx-4 p-6 rounded-2xl bg-white/95 dark:bg-[#0D0F16]/95 backdrop-blur-xl border border-authra-border-light dark:border-authra-border-dark shadow-2xl transition-all duration-300 ease-in-out origin-top ${isOpen ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'}`}>
         <div className="flex flex-col gap-6">
           {navLinks.map((link) => {
-            const isRoute = link === 'Dashboard' || link === 'Profile' || link === 'Pricing';
-            const path = link === 'Dashboard' ? '/dashboard' : link === 'Profile' ? (user ? (user.accountType === 'organization' ? `/o/${user.username || 'profile'}` : `/user/${user.username || 'profile'}`) : '/login') : link === 'Pricing' ? '/pricing' : `/#${link.toLowerCase()}`;
+            const isRoute = link === 'Dashboard' || link === 'Profile' || link === 'Pricing' || link === 'About';
+            const path = link === 'Dashboard' ? '/dashboard' : link === 'Profile' ? (user ? (user.accountType === 'organization' ? `/o/${user.username || 'profile'}` : `/user/${user.username || 'profile'}`) : '/login') : link === 'Pricing' ? '/pricing' : link === 'About' ? '/about' : `/#${link.toLowerCase()}`;
 
             return isRoute ? (
               <Link key={link} to={path} onClick={() => setIsOpen(false)} className="text-lg font-[510] text-authra-text-light dark:text-white hover:text-brand-periwinkle dark:hover:text-brand-ice transition-colors">

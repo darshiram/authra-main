@@ -3,17 +3,24 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
+import { initCronJobs } from './utils/cronJobs.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import certificateRoutes from './routes/certificateRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import careerRoutes from './routes/careerRoutes.js';
+import siteSettingsRoutes from './routes/siteSettingsRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import path from 'path';
 
 dotenv.config();
 
 // Connect to Database
 connectDB();
+
+// Initialize scheduled background jobs
+initCronJobs();
 
 const app = express();
 
@@ -48,6 +55,9 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/certificates', certificateRoutes);
 app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/careers', careerRoutes);
+app.use('/api/v1/settings', siteSettingsRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // Make uploads folder static
 const __dirname = path.resolve();

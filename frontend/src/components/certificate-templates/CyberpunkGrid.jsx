@@ -6,8 +6,13 @@ import { QRCodeSVG } from 'qrcode.react';
 export default function CyberpunkGrid({ data }) {
   const issuerName = data?.issuerName || "NeuroNet Systems";
   const recipientName = data?.recipientName || "Alex Developer";
-  const title = data?.title || "Cloud Native Architecture";
-  const skills = data?.skills ? data.skills.split(',').map(s => s.trim()) : ['Kubernetes', 'Docker', 'Go', 'gRPC'];
+  const rawTitle = data && 'title' in data ? data.title : "Cloud Native Architecture";
+  const title = rawTitle;
+  const rawEventName = data && 'eventName' in data ? data.eventName : "";
+  const eventName = rawEventName;
+  const rank = data?.rank || "";
+  const rawSkills = data && 'skills' in data ? data.skills : 'Kubernetes, Docker, Go, gRPC';
+  const skills = rawSkills ? rawSkills.split(',').map(s => s.trim()).filter(Boolean) : [];
   const issueDate = data?.issueDate ? new Date(data.issueDate).toLocaleDateString() : "2026.05.12";
   const credentialId = data?.credentialId || "AUT-8392-AB";
 
@@ -57,7 +62,13 @@ export default function CyberpunkGrid({ data }) {
             {recipientName}
           </h1>
           <p className="text-cyan-400 tracking-[0.2em] text-sm mb-2">ACHIEVEMENT_UNLOCKED:</p>
-          <h2 className="text-3xl font-bold text-fuchsia-400 mb-8 uppercase tracking-widest">{title}</h2>
+          <h2 className={`text-3xl font-bold text-fuchsia-400 uppercase tracking-widest ${eventName ? 'mb-2' : 'mb-8'}`}>{title}</h2>
+          {eventName && (
+            <p className="text-cyan-500 tracking-[0.2em] text-sm font-bold mb-8 uppercase">[{eventName}]</p>
+          )}
+          {rank && (
+            <p className="text-amber-400 tracking-[0.2em] text-sm mb-4">ACHIEVEMENT_RANK: <span className="text-amber-300 font-bold">[{rank}]</span></p>
+          )}
 
           <div className="flex flex-wrap gap-3">
             {skills.map((skill, index) => (

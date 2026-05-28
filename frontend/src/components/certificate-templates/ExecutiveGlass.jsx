@@ -6,8 +6,13 @@ import { QRCodeSVG } from 'qrcode.react';
 export default function ExecutiveGlass({ data }) {
   const issuerName = data?.issuerName || "Global Finance Institute";
   const recipientName = data?.recipientName || "Alex Developer";
-  const title = data?.title || "Cybersecurity Risk Management";
-  const skills = data?.skills ? data.skills.split(',').map(s => s.trim()) : ['Risk Assessment', 'Compliance', 'Auditing'];
+  const rawTitle = data && 'title' in data ? data.title : "Cybersecurity Risk Management";
+  const title = rawTitle;
+  const rawEventName = data && 'eventName' in data ? data.eventName : "";
+  const eventName = rawEventName;
+  const rank = data?.rank || "";
+  const rawSkills = data && 'skills' in data ? data.skills : 'Risk Assessment, Compliance, Auditing';
+  const skills = rawSkills ? rawSkills.split(',').map(s => s.trim()).filter(Boolean) : [];
   const issueDate = data?.issueDate ? new Date(data.issueDate).toLocaleDateString() : "May 12, 2026";
   const credentialId = data?.credentialId || "AUT-8392-AB";
 
@@ -51,7 +56,17 @@ export default function ExecutiveGlass({ data }) {
             {recipientName}
           </h1>
           <p className="text-white/60 text-sm tracking-widest uppercase mb-4">For achieving proficiency in</p>
-          <h2 className="text-3xl font-medium text-blue-400 mb-8 tracking-wide">{title}</h2>
+          <h2 className={`text-3xl font-medium text-blue-400 tracking-wide ${eventName ? 'mb-2' : 'mb-8'}`}>{title}</h2>
+          {eventName && (
+            <p className="text-white/70 text-sm tracking-widest uppercase font-medium mb-8">Part of: {eventName}</p>
+          )}
+          {rank && (
+            <div className="flex justify-center mb-8">
+              <span className="px-5 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full text-[#0A1929] text-xs font-bold tracking-widest uppercase shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                {rank}
+              </span>
+            </div>
+          )}
           
           <div className="flex justify-center gap-4">
             {skills.map((skill, index) => (

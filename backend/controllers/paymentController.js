@@ -1,6 +1,7 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import User from '../models/User.js';
+import sendEmail from '../utils/sendEmail.js';
 
 const getRazorpayInstance = () => {
   if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
@@ -17,7 +18,7 @@ const getRazorpayInstance = () => {
 // @access  Private
 export const createOrder = async (req, res) => {
   try {
-    const { amount, plan, extraCerts } = req.body;
+    const { amount, plan, extraCerts, billingCycle } = req.body;
 
     const rzp = getRazorpayInstance();
     if (!rzp) {
@@ -31,7 +32,8 @@ export const createOrder = async (req, res) => {
       notes: {
         userId: req.user._id.toString(),
         plan: plan || '',
-        extraCerts: String(extraCerts || 0)
+        extraCerts: String(extraCerts || 0),
+        billingCycle: billingCycle || ''
       }
     };
 
@@ -53,7 +55,7 @@ export const createOrder = async (req, res) => {
 // @access  Private
 export const verifyPayment = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, extraCerts } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, extraCerts, billingCycle } = req.body;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
@@ -70,6 +72,11 @@ export const verifyPayment = async (req, res) => {
       
       if (plan) {
         user.plan = plan;
+        if (billingCycle === 'yearly') {
+          user.planExpiryDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+        } else if (billingCycle === 'monthly') {
+          user.planExpiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        }
       }
       
       if (extraCerts) {
@@ -77,6 +84,26 @@ export const verifyPayment = async (req, res) => {
       }
       
       await user.save();
+
+      // Send Email Notification
+      sendEmail({
+        email: user.email,
+        subject: `Payment Successful - Authra`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+            <div style="background-color: #3b82f6; padding: 20px; text-align: center;">
+              <h2 style="color: #ffffff; margin: 0;">Payment Successful</h2>
+            </div>
+            <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+              <p>Hi ${user.name || user.username},</p>
+              <p>Your payment was successfully verified.</p>
+              ${plan ? `<p>Your account is now on the <strong>${plan.toUpperCase()}</strong> plan.</p>` : ''}
+              ${extraCerts && extraCerts !== '0' ? `<p><strong>${extraCerts}</strong> extra certificates have been added to your balance.</p>` : ''}
+              <p>Thank you for using Authra!</p>
+            </div>
+          </div>
+        `
+      }).catch(err => console.error("Failed to send payment email:", err));
 
       res.json({ success: true, message: 'Payment verified successfully' });
     } else {
@@ -114,7 +141,7 @@ export const razorpayWebhook = async (req, res) => {
       const order = payload.order.entity;
       const notes = order.notes || {};
       
-      const { userId, plan, extraCerts } = notes;
+      const { userId, plan, extraCerts, billingCycle } = notes;
 
       if (userId) {
         const user = await User.findById(userId);
@@ -122,6 +149,11 @@ export const razorpayWebhook = async (req, res) => {
           let updated = false;
           if (plan) {
             user.plan = plan;
+            if (billingCycle === 'yearly') {
+              user.planExpiryDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+            } else if (billingCycle === 'monthly') {
+              user.planExpiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            }
             updated = true;
           }
           if (extraCerts && extraCerts !== '0') {
@@ -132,6 +164,26 @@ export const razorpayWebhook = async (req, res) => {
           if (updated) {
             await user.save();
             console.log(`Webhook: Successfully upgraded user ${userId}`);
+
+            // Send Email Notification via Webhook
+            sendEmail({
+              email: user.email,
+              subject: `Subscription Renewed - Authra`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+                  <div style="background-color: #10b981; padding: 20px; text-align: center;">
+                    <h2 style="color: #ffffff; margin: 0;">Subscription Auto-Renewed</h2>
+                  </div>
+                  <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+                    <p>Hi ${user.name || user.username},</p>
+                    <p>Your subscription payment was successfully processed automatically.</p>
+                    ${plan ? `<p>Your account remains on the <strong>${plan.toUpperCase()}</strong> plan.</p>` : ''}
+                    ${extraCerts && extraCerts !== '0' ? `<p><strong>${extraCerts}</strong> extra certificates have been added.</p>` : ''}
+                    <p>Thank you for your continued support of Authra!</p>
+                  </div>
+                </div>
+              `
+            }).catch(err => console.error("Failed to send webhook payment email:", err));
           }
         }
       }

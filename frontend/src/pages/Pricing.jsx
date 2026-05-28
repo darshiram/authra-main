@@ -10,17 +10,25 @@ export default function Pricing() {
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [user, setUser] = useState(null);
+  const [settings, setSettings] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await axiosInstance.get('/users/me');
         setUser(res.data);
-      } catch (err) {
-        // Not logged in
+      } catch (err) {}
+    };
+    const fetchSettings = async () => {
+      try {
+        const { data } = await axiosInstance.get('/settings');
+        setSettings(data);
+      } catch (error) {
+        console.error('Error fetching settings:', error);
       }
     };
     fetchUser();
+    fetchSettings();
   }, []);
 
   const handleRazorpayMock = async (planName, price) => {
@@ -28,7 +36,8 @@ export default function Pricing() {
       const res = await axiosInstance.post('/payments/order', {
         amount: price,
         plan: planName.toLowerCase() === 'professional' ? 'pro' : 'enterprise',
-        extraCerts: 0
+        extraCerts: 0,
+        billingCycle
       });
 
       if (!res.data.keyId) {
@@ -50,6 +59,7 @@ export default function Pricing() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               plan: planName.toLowerCase() === 'professional' ? 'pro' : 'enterprise',
+              billingCycle
             });
             if (verifyRes.data.success) {
               alert("Payment successful! Your plan has been upgraded.");
@@ -145,129 +155,67 @@ export default function Pricing() {
           {/* Pricing Cards */}
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center mb-24">
             
-            {/* Free Plan */}
-            <div className="bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-[#2A3155] rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow relative flex flex-col h-full">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-authra-text-light dark:text-white mb-2">Starter</h3>
-                <p className="text-authra-text-sec-light dark:text-authra-text-sec-dark text-sm">Perfect for small organizations trying out the platform.</p>
-              </div>
-              <div className="mb-8">
-                <div className="flex items-end gap-2 mb-1">
-                  <span className="text-4xl font-bold text-authra-text-light dark:text-white">₹0</span>
-                  <span className="text-authra-text-sec-light dark:text-authra-text-sec-dark font-medium mb-1">/ month</span>
-                </div>
-              </div>
-              
-              <ul className="space-y-4 mb-8 flex-grow">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">100 Certificates / month</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">Basic Templates</span>
-                </li>
-                <li className="flex items-start gap-3 text-authra-text-sec-light/50 dark:text-authra-text-sec-dark/50">
-                  <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-                  <span className="text-sm">No API Access</span>
-                </li>
-              </ul>
-              
-              <button 
-                className="w-full py-3 rounded-xl font-semibold bg-gray-100 dark:bg-white/5 text-authra-text-light dark:text-white hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
-                onClick={() => user ? navigate('/dashboard') : navigate('/signup')}
+            {settings?.pricingPlans?.map((plan, idx) => (
+              <div 
+                key={idx} 
+                className={`${plan.isPopular ? 'bg-gradient-to-b from-brand-steel/10 to-transparent dark:from-[#1A2035] dark:to-[#0D0F16] border-2 border-brand-steel transform md:-translate-y-4' : 'bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-[#2A3155]'} rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow relative flex flex-col h-full ${plan.isPopular ? 'h-[105%]' : ''}`}
               >
-                {user ? (user.plan === 'free' || !user.plan ? 'Current Plan' : 'Go to Dashboard') : 'Get Started Free'}
-              </button>
-            </div>
-
-            {/* Pro Plan */}
-            <div className="bg-gradient-to-b from-brand-steel/10 to-transparent dark:from-[#1A2035] dark:to-[#0D0F16] border-2 border-brand-steel rounded-3xl p-8 shadow-2xl relative transform md:-translate-y-4 flex flex-col h-[105%]">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-steel text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 uppercase tracking-wide">
-                <Zap className="w-3.5 h-3.5" /> Most Popular
-              </div>
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-authra-text-light dark:text-white mb-2">Professional</h3>
-                <p className="text-authra-text-sec-light dark:text-authra-text-sec-dark text-sm">For growing organizations that need more power.</p>
-              </div>
-              <div className="mb-8">
-                <div className="flex items-end gap-2 mb-1">
-                  <span className="text-4xl font-bold text-authra-text-light dark:text-white">
-                    ₹{billingCycle === 'monthly' ? '2,999' : '2,399'}
-                  </span>
-                  <span className="text-authra-text-sec-light dark:text-authra-text-sec-dark font-medium mb-1">/ month</span>
+                {plan.isPopular && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-steel text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 uppercase tracking-wide">
+                    <Zap className="w-3.5 h-3.5" /> Most Popular
+                  </div>
+                )}
+                
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-authra-text-light dark:text-white mb-2">{plan.name}</h3>
+                  <p className="text-authra-text-sec-light dark:text-authra-text-sec-dark text-sm">{plan.description}</p>
                 </div>
-                {billingCycle === 'yearly' && <p className="text-xs text-brand-steel font-medium">Billed annually</p>}
-              </div>
-              
-              <ul className="space-y-4 mb-8 flex-grow">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">1,000 Certificates / month</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">Full API Access</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">Custom Branding & Logos</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">Buy Extra: ₹10 per 100 certs</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">Priority Email Support</span>
-                </li>
-              </ul>
-              
-              <button 
-                onClick={() => user ? handleRazorpayMock('Professional', billingCycle === 'monthly' ? 2999 : 28788) : navigate('/signup')}
-                className="w-full py-3 rounded-xl font-semibold bg-brand-steel text-white hover:shadow-lg hover:shadow-brand-steel/30 transition-all flex items-center justify-center gap-2"
-              >
-                {user ? 'Upgrade to Pro' : 'Start Free Trial'} <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Enterprise Plan */}
-            <div className="bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-[#2A3155] rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow relative flex flex-col h-full">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-authra-text-light dark:text-white mb-2">Enterprise</h3>
-                <p className="text-authra-text-sec-light dark:text-authra-text-sec-dark text-sm">For large scale issuance with custom requirements.</p>
-              </div>
-              <div className="mb-8">
-                <div className="flex items-end gap-2 mb-1">
-                  <span className="text-4xl font-bold text-authra-text-light dark:text-white">Custom</span>
+                
+                <div className="mb-8">
+                  {plan.monthlyPrice === -1 ? (
+                    <div className="flex items-end gap-2 mb-1">
+                      <span className="text-4xl font-bold text-authra-text-light dark:text-white">Custom</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-end gap-2 mb-1">
+                      <span className="text-4xl font-bold text-authra-text-light dark:text-white">
+                        ₹{billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice}
+                      </span>
+                      <span className="text-authra-text-sec-light dark:text-authra-text-sec-dark font-medium mb-1">/ month</span>
+                    </div>
+                  )}
+                  {plan.monthlyPrice !== -1 && billingCycle === 'yearly' && <p className="text-xs text-brand-steel font-medium mb-2">Billed annually</p>}
                 </div>
-                <p className="text-xs text-transparent select-none">Spacer</p>
+                
+                <ul className="space-y-4 mb-8 flex-grow">
+                  {plan.features.map((feature, fIdx) => (
+                    <li key={fIdx} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
+                      <span className="text-sm text-authra-text-light dark:text-gray-300">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <button 
+                  onClick={() => {
+                    if (plan.monthlyPrice === -1) {
+                      navigate('/contact');
+                    } else {
+                      user ? handleRazorpayMock(plan.name, billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice * 12) : navigate('/signup')
+                    }
+                  }}
+                  className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${plan.isPopular ? 'bg-brand-steel text-white hover:shadow-lg hover:shadow-brand-steel/30' : 'bg-gray-100 dark:bg-white/5 text-authra-text-light dark:text-white hover:bg-gray-200 dark:hover:bg-white/10'}`}
+                >
+                  {plan.monthlyPrice === -1 ? (
+                    <><Shield className="w-4 h-4" /> Contact Sales</>
+                  ) : user ? (
+                    plan.monthlyPrice === 0 ? (user.plan === 'free' || !user.plan ? 'Current Plan' : 'Go to Dashboard') : `Upgrade to ${plan.name} `
+                  ) : (
+                    'Get Started'
+                  )}
+                </button>
               </div>
-              
-              <ul className="space-y-4 mb-8 flex-grow">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">Unlimited Certificates</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">Dedicated Account Manager</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">Custom Integration Solutions</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-brand-steel shrink-0 mt-0.5" />
-                  <span className="text-sm text-authra-text-light dark:text-gray-300">SLA Guarantee</span>
-                </li>
-              </ul>
-              
-              <button className="w-full py-3 rounded-xl font-semibold border border-authra-border-light dark:border-[#2A3155] text-authra-text-light dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
-                <Shield className="w-4 h-4" /> Contact Sales
-              </button>
-            </div>
-
+            ))}
           </div>
 
           {/* Feature Comparison Table */}

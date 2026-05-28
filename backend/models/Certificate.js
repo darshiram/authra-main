@@ -42,6 +42,14 @@ const certificateSchema = new mongoose.Schema({
       type: String,
       default: ''
     },
+    title: {
+      type: String,
+      default: ''
+    },
+    rank: {
+      type: String,
+      default: ''
+    },
     eventName: {
       type: String,
       default: ''

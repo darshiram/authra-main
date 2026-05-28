@@ -6,8 +6,13 @@ import { QRCodeSVG } from 'qrcode.react';
 export default function ModernMinimalist({ data }) {
   const issuerName = data?.issuerName || "TechCorp Academy";
   const recipientName = data?.recipientName || "Alex Developer";
-  const title = data?.title || "Advanced Full-Stack Engineering";
-  const skills = data?.skills ? data.skills.split(',').map(s => s.trim()) : ['React', 'Node.js', 'System Design', 'AWS'];
+  const rawTitle = data && 'title' in data ? data.title : "Advanced Full-Stack Engineering";
+  const title = rawTitle;
+  const rawEventName = data && 'eventName' in data ? data.eventName : "";
+  const eventName = rawEventName;
+  const rank = data?.rank || "";
+  const rawSkills = data && 'skills' in data ? data.skills : 'React, Node.js, System Design, AWS';
+  const skills = rawSkills ? rawSkills.split(',').map(s => s.trim()).filter(Boolean) : [];
   const issueDate = data?.issueDate ? new Date(data.issueDate).toLocaleDateString() : "May 12, 2026";
   const credentialId = data?.credentialId || "AUT-8392-AB";
   
@@ -48,7 +53,17 @@ export default function ModernMinimalist({ data }) {
           {recipientName}
         </h1>
         <p className="text-sm tracking-[0.3em] text-authra-text-sec-light dark:text-[#9AA8D6] uppercase mb-4">has successfully completed</p>
-        <h2 className="text-3xl md:text-4xl font-medium text-brand-steel mb-8">{title}</h2>
+        <h2 className={`text-3xl md:text-4xl font-medium text-brand-steel ${eventName ? 'mb-2' : 'mb-8'}`}>{title}</h2>
+        {eventName && (
+          <p className="text-sm font-semibold text-authra-text-light/60 dark:text-[#9AA8D6]/80 mb-8 tracking-widest uppercase">{eventName}</p>
+        )}
+        {rank && (
+          <div className="flex justify-center mb-8">
+            <span className="px-4 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm font-bold tracking-widest uppercase shadow-sm">
+              {rank}
+            </span>
+          </div>
+        )}
         
         <div className="flex justify-center flex-wrap gap-2">
           {skills.map((skill, index) => (

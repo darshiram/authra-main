@@ -26,6 +26,7 @@ export const getUserProfile = async (req, res) => {
       github: user.github,
       profilePicture: user.profilePicture,
       logoUrl: user.logoUrl,
+      bannerUrl: user.bannerUrl,
       aboutOrg: user.aboutOrg,
       gallery: user.gallery,
       plan: user.plan,
@@ -65,6 +66,7 @@ export const updateUserProfile = async (req, res) => {
     user.github = req.body.github || user.github;
     if (req.body.profilePicture) user.profilePicture = req.body.profilePicture;
     if (req.body.logoUrl) user.logoUrl = req.body.logoUrl;
+    if (req.body.bannerUrl) user.bannerUrl = req.body.bannerUrl;
     
     // Portfolio fields
     if (req.body.projects) user.projects = req.body.projects;
@@ -95,6 +97,7 @@ export const updateUserProfile = async (req, res) => {
       github: updatedUser.github,
       profilePicture: updatedUser.profilePicture,
       logoUrl: updatedUser.logoUrl,
+      bannerUrl: updatedUser.bannerUrl,
       aboutOrg: updatedUser.aboutOrg,
       gallery: updatedUser.gallery,
       plan: updatedUser.plan,
@@ -140,6 +143,7 @@ export const getUserByUsername = async (req, res) => {
       github: user.github,
       profilePicture: user.profilePicture,
       logoUrl: user.logoUrl,
+      bannerUrl: user.bannerUrl,
       aboutOrg: user.aboutOrg,
       gallery: user.gallery,
       plan: user.plan,
