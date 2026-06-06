@@ -54,6 +54,10 @@ const certificateSchema = new mongoose.Schema({
       type: String,
       default: ''
     }
+  },
+  emailSent: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

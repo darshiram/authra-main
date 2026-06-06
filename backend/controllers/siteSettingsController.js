@@ -11,7 +11,48 @@ export const getSiteSettings = async (req, res) => {
     // If settings document doesn't exist, create it with defaults
     if (!settings) {
       settings = await SiteSettings.create({
-        singletonId: 'authra_global_settings'
+        singletonId: 'authra_global_settings',
+        pricingPlans: [
+          {
+            name: "Starter",
+            description: "Perfect for individuals and small teams.",
+            monthlyPrice: 0,
+            yearlyPrice: 0,
+            features: [
+              "100 certificates per month",
+              "Standard email templates",
+              "Community support",
+              "Basic analytics"
+            ]
+          },
+          {
+            name: "Professional",
+            description: "For growing organizations needing brand control.",
+            monthlyPrice: 999,
+            yearlyPrice: 833,
+            isPopular: true,
+            features: [
+              "1,000 certificates per month",
+              "Custom email domains & templates",
+              "API access",
+              "Priority email support",
+              "Custom certificate design"
+            ]
+          },
+          {
+            name: "Enterprise",
+            description: "Unlimited potential for large institutions.",
+            monthlyPrice: -1, // -1 can mean custom pricing
+            yearlyPrice: -1,
+            features: [
+              "Unlimited certificates",
+              "Dedicated account manager",
+              "Custom integrations (HR/LMS)",
+              "SLA guarantees",
+              "On-premise deployment options"
+            ]
+          }
+        ]
       });
     }
 

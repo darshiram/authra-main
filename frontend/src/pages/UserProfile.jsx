@@ -8,6 +8,7 @@ import Footer from '../components/Footer';
 import DownloadOffscreenButton from '../components/DownloadOffscreenButton';
 import { Helmet } from 'react-helmet-async';
 import { axiosInstance } from '../config/api';
+import { useToast } from '../context/ToastContext';
 
 const TwitterIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -24,6 +25,7 @@ const LinkedinIcon = ({ className }) => (
 );
 
 export default function UserProfile() {
+  const { showToast } = useToast();
   const { username } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -78,7 +80,7 @@ export default function UserProfile() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB limit');
+      showToast('File size exceeds 5MB limit', 'error');
       return;
     }
 
@@ -97,7 +99,7 @@ export default function UserProfile() {
       setUser(prev => ({ ...prev, profilePicture: newPicUrl }));
       setIsProfilePicModalOpen(false);
     } catch (err) {
-      alert(err.response?.data?.message || 'Error uploading profile picture');
+      showToast(err.response?.data?.message || 'Error uploading profile picture', 'error');
     } finally {
       setIsUploadingPic(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -111,7 +113,7 @@ export default function UserProfile() {
       setUser(prev => ({ ...prev, profilePicture: '' }));
       setIsProfilePicModalOpen(false);
     } catch (err) {
-      alert(err.response?.data?.message || 'Error removing profile picture');
+      showToast(err.response?.data?.message || 'Error removing profile picture', 'error');
     } finally {
       setIsUploadingPic(false);
     }

@@ -12,6 +12,7 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import careerRoutes from './routes/careerRoutes.js';
 import siteSettingsRoutes from './routes/siteSettingsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import designRequestRoutes from './routes/designRequestRoutes.js';
 import path from 'path';
 
 dotenv.config();
@@ -58,6 +59,7 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/careers', careerRoutes);
 app.use('/api/v1/settings', siteSettingsRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/design-requests', designRequestRoutes);
 
 // Make uploads folder static
 const __dirname = path.resolve();

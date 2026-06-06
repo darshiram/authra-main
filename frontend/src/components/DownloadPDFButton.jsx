@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
+import { useToast } from '../context/ToastContext';
 
 export default function DownloadPDFButton({ targetId, fileName }) {
+  const { showToast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -45,7 +47,7 @@ export default function DownloadPDFButton({ targetId, fileName }) {
       pdf.save(`${fileName}.pdf`);
     } catch (err) {
       console.error('Error generating PDF:', err);
-      alert(`Failed to generate PDF. Error: ${err.message}`);
+      showToast(`Failed to generate PDF. Error: ${err.message}`, 'error');
     } finally {
       setIsDownloading(false);
     }

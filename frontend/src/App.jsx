@@ -1,6 +1,7 @@
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Footer from './components/Footer';
@@ -23,11 +24,14 @@ import Contact from './pages/Contact';
 import Features from './pages/Features';
 import TermsConditions from './pages/TermsConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminUserDetails from './pages/AdminUserDetails';
 
 function App() {
   return (
     <HelmetProvider>
-      <Router>
+      <ToastProvider>
+        <Router>
         <div className="relative overflow-hidden w-full min-h-screen bg-authra-bg-light dark:bg-authra-bg-dark transition-colors duration-300 font-inter text-authra-text-light dark:text-authra-text-dark">
           <Routes>
             <Route path="/" element={
@@ -63,9 +67,12 @@ function App() {
                 <ManagePortfolio />
               </>
             } />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users/:id" element={<AdminUserDetails />} />
           </Routes>
         </div>
-      </Router>
+        </Router>
+      </ToastProvider>
     </HelmetProvider>
   );
 }

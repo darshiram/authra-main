@@ -7,6 +7,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import horizontalLogo from '../assets/horziontal logo.png';
 import { axiosInstance } from '../config/api';
+import { useToast } from '../context/ToastContext';
 
 const GithubIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -34,6 +35,7 @@ const careerGoals = [
 ];
 
 export default function Onboarding() {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -104,7 +106,7 @@ export default function Onboarding() {
       navigate(`/user/${res.data.username || formData.username}`);
     } catch (err) {
       console.error(err);
-      alert('Registration failed. ' + (err.response?.data?.message || 'Please try again.'));
+      showToast('Registration failed. ' + (err.response?.data?.message || 'Please try again.'), 'error');
     } finally {
       setIsLoading(false);
     }

@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { CheckCircle2, Zap, Shield, ArrowRight, ArrowLeft, HelpCircle } from 'lucide-react';
 import { axiosInstance } from '../config/api';
+import { useToast } from '../context/ToastContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 export default function Pricing() {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [user, setUser] = useState(null);
@@ -41,7 +43,7 @@ export default function Pricing() {
       });
 
       if (!res.data.keyId) {
-        alert("Razorpay is not configured on the backend. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your .env file to enable actual payments.");
+        showToast("Razorpay is not configured on the backend. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your .env file to enable actual payments.", "error");
         return;
       }
 
@@ -62,12 +64,12 @@ export default function Pricing() {
               billingCycle
             });
             if (verifyRes.data.success) {
-              alert("Payment successful! Your plan has been upgraded.");
+              showToast("Payment successful! Your plan has been upgraded.", "success");
               navigate('/dashboard');
             }
           } catch (err) {
             console.error(err);
-            alert("Payment verification failed: " + (err.response?.data?.message || err.message));
+            showToast("Payment verification failed: " + (err.response?.data?.message || err.message), "error");
           }
         },
         theme: {
@@ -90,7 +92,7 @@ export default function Pricing() {
       }
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Error initiating payment.");
+      showToast(error.response?.data?.message || "Error initiating payment.", "error");
     }
   };
 

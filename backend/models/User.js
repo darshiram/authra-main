@@ -38,8 +38,18 @@ const userSchema = new mongoose.Schema({
   profilePicture: String,
   bio: String,
   college: String,
+  degree: String,
+  branch: String,
+  year: String,
   location: String,
   skills: [String],
+  careerGoals: [String],
+  preferences: {
+    alerts: { type: Boolean, default: true },
+    workshops: { type: Boolean, default: true },
+    personalized: { type: Boolean, default: true },
+    updates: { type: Boolean, default: false }
+  },
   projects: [{
     title: String,
     description: String,
@@ -71,7 +81,7 @@ const userSchema = new mongoose.Schema({
   // Subscription fields
   plan: {
     type: String,
-    enum: ['free', 'pro', 'enterprise'],
+    enum: ['free', 'pro', 'enterprise', 'sponsor'],
     default: 'free',
   },
   planExpiryDate: {
@@ -81,6 +91,10 @@ const userSchema = new mongoose.Schema({
   extraCertificates: {
     type: Number,
     default: 0
+  },
+  lastRenewalReminderDate: {
+    type: Date,
+    default: null
   },
   
   // Roles (Admin, OrgOwner, User, etc)

@@ -4,6 +4,7 @@ import sendEmail from '../utils/sendEmail.js';
 import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
+import { logActivity } from '../utils/logger.js';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -22,7 +23,7 @@ export const login = async (req, res) => {
       // Send login alert email
       const userAgent = req.headers['user-agent'] || 'Unknown Device';
       const ipAddress = req.ip || req.socket.remoteAddress || 'Unknown IP';
-      
+
       sendEmail({
         email: user.email,
         subject: 'New login to your Authra account',
@@ -46,6 +47,8 @@ export const login = async (req, res) => {
         `
       }).catch(err => console.error("Failed to send login alert:", err));
 
+      await logActivity(req, 'LOGIN', `User ${user.email} logged in.`, user._id);
+
       res.json({
         _id: user._id,
         accountType: user.accountType,
@@ -66,7 +69,7 @@ export const login = async (req, res) => {
 // @route   POST /api/v1/auth/register
 // @access  Public
 export const register = async (req, res) => {
-  const { 
+  const {
     accountType, email, password, orgName, mobileNo, website, linkedin,
     fullName, username, college, degree, branch, year, selectedInterests, selectedGoals, github, portfolio, bio, location,
     googleToken, githubToken
@@ -135,6 +138,8 @@ export const register = async (req, res) => {
       location,
       github,
       skills: selectedInterests || [],
+      careerGoals: selectedGoals || [],
+      preferences: req.body.preferences || undefined,
       profilePicture,
       googleId,
       githubId
@@ -159,6 +164,9 @@ export const register = async (req, res) => {
       }
 
       generateToken(res, user._id);
+
+
+      await logActivity(req, 'REGISTER', `New user registered: ${user.email}`, user._id);
 
       res.status(201).json({
         _id: user._id,
@@ -308,7 +316,7 @@ export const googleAuth = async (req, res) => {
   const { token, tokenResponse, accountType } = req.body;
   try {
     const actualToken = token || tokenResponse?.access_token || tokenResponse?.credential;
-    
+
     if (!actualToken) {
       return res.status(400).json({ message: 'No token provided', details: req.body });
     }
@@ -358,7 +366,7 @@ export const googleAuth = async (req, res) => {
     // Send login alert email
     const userAgent = req.headers['user-agent'] || 'Unknown Device';
     const ipAddress = req.ip || req.socket?.remoteAddress || 'Unknown IP';
-    
+
     sendEmail({
       email: user.email,
       subject: 'New login to your Authra account (via Google)',
@@ -392,10 +400,10 @@ export const googleAuth = async (req, res) => {
     });
   } catch (error) {
     console.error('Google Auth Error:', error.response?.data || error.message);
-    res.status(401).json({ 
-      message: 'Google auth failed', 
+    res.status(401).json({
+      message: 'Google auth failed',
       error: error.message,
-      googleError: error.response?.data 
+      googleError: error.response?.data
     });
   }
 };
@@ -454,7 +462,7 @@ export const githubAuth = async (req, res) => {
     // Send login alert email
     const userAgent = req.headers['user-agent'] || 'Unknown Device';
     const ipAddress = req.ip || req.socket?.remoteAddress || 'Unknown IP';
-    
+
     sendEmail({
       email: user.email,
       subject: 'New login to your Authra account (via GitHub)',
@@ -498,7 +506,7 @@ export const linkGoogle = async (req, res) => {
   const { token, tokenResponse } = req.body;
   try {
     const actualToken = token || tokenResponse?.access_token || tokenResponse?.credential;
-    
+
     if (!actualToken) {
       return res.status(400).json({ message: 'No token provided' });
     }

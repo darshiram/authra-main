@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { axiosInstance } from '../../config/api';
 
 export default function RequestDesignModal({
   showRequestDesignModal,
@@ -7,6 +9,8 @@ export default function RequestDesignModal({
   requestDesignForm,
   setRequestDesignForm
 }) {
+  const { showToast } = useToast();
+
   if (!showRequestDesignModal) return null;
 
   return (
@@ -39,11 +43,17 @@ export default function RequestDesignModal({
             />
           </div>
           <button 
-            onClick={() => {
-              if(!requestDesignForm.description.trim()) return alert("Please provide a description");
-              alert('Request submitted! Our design team will contact you shortly.');
-              setShowRequestDesignModal(false);
-              setRequestDesignForm({ description: '', link: '' });
+            onClick={async () => {
+              if(!requestDesignForm.description.trim()) return showToast("Please provide a description", "error");
+              
+              try {
+                await axiosInstance.post('/design-requests', requestDesignForm);
+                showToast('Request submitted! Our design team will contact you shortly.', 'success');
+                setShowRequestDesignModal(false);
+                setRequestDesignForm({ description: '', link: '' });
+              } catch (err) {
+                showToast(err.response?.data?.message || 'Error submitting request', 'error');
+              }
             }}
             className="btn-primary w-full mt-4"
           >

@@ -30,32 +30,45 @@ const checkExpiringSubscriptions = async () => {
       
       // Send email if days left is 7, 3, or 1
       if (daysLeft === 7 || daysLeft === 3 || daysLeft === 1) {
+        // Check if we already sent a reminder today
+        const lastSent = user.lastRenewalReminderDate;
+        if (lastSent && lastSent.toDateString() === now.toDateString()) {
+          continue; // Already sent today
+        }
+        
         // Send email
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         const pricingUrl = `${frontendUrl}/pricing`;
         
-        await sendEmail({
-          email: user.email,
-          subject: `Action Required: Your Authra ${user.plan.toUpperCase()} plan expires in ${daysLeft} days`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
-              <div style="background-color: #f59e0b; padding: 20px; text-align: center;">
-                <h2 style="color: #ffffff; margin: 0;">Subscription Expiring Soon</h2>
-              </div>
-              <div style="padding: 30px; background-color: #ffffff; color: #334155;">
-                <p>Hi ${user.name || user.username},</p>
-                <p>Your <strong>${user.plan.toUpperCase()}</strong> plan is set to expire in <strong>${daysLeft} days</strong> (on ${new Date(user.planExpiryDate).toLocaleDateString()}).</p>
-                <p>To avoid any interruption in issuing certificates and using premium features, please renew your subscription.</p>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${pricingUrl}" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Renew Subscription</a>
+        try {
+          await sendEmail({
+            email: user.email,
+            subject: `Action Required: Your Authra ${user.plan.toUpperCase()} plan expires in ${daysLeft} days`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+                <div style="background-color: #f59e0b; padding: 20px; text-align: center;">
+                  <h2 style="color: #ffffff; margin: 0;">Subscription Expiring Soon</h2>
                 </div>
-                <p>Thank you for using Authra!</p>
+                <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+                  <p>Hi ${user.name || user.username},</p>
+                  <p>Your <strong>${user.plan.toUpperCase()}</strong> plan is set to expire in <strong>${daysLeft} days</strong> (on ${new Date(user.planExpiryDate).toLocaleDateString()}).</p>
+                  <p>To avoid any interruption in issuing certificates and using premium features, please renew your subscription.</p>
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${pricingUrl}" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Renew Subscription</a>
+                  </div>
+                  <p>Thank you for using Authra!</p>
+                </div>
               </div>
-            </div>
-          `
-        }).catch(err => console.error("Failed to send subscription renewal email:", err));
-        
-        console.log(`Sent renewal reminder to ${user.email} (${daysLeft} days left)`);
+            `
+          });
+          
+          // Update DB so we don't send again today if server restarts
+          user.lastRenewalReminderDate = now;
+          await user.save();
+          console.log(`Sent renewal reminder to ${user.email} (${daysLeft} days left)`);
+        } catch (err) {
+          console.error("Failed to send subscription renewal email:", err);
+        }
       }
     }
   } catch (error) {

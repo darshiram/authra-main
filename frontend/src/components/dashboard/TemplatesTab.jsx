@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 import ModernMinimalist from '../certificate-templates/ModernMinimalist';
 import CyberpunkGrid from '../certificate-templates/CyberpunkGrid';
 import ExecutiveGlass from '../certificate-templates/ExecutiveGlass';
@@ -11,6 +12,7 @@ export default function TemplatesTab({
   setActiveTab,
   setShowRequestDesignModal
 }) {
+  const { showToast } = useToast();
   const templateData = { issuerName: settingsForm.name || user?.name || "Your Organization" };
 
   return (
@@ -27,7 +29,7 @@ export default function TemplatesTab({
         <button 
           onClick={() => {
             if (user?.plan === 'free') {
-              alert('Custom design requests are only available for paid organization accounts. Please upgrade your plan.');
+              showToast('Custom design requests are only available for paid organization accounts. Please upgrade your plan.', 'error');
             } else {
               setShowRequestDesignModal(true);
             }

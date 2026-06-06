@@ -4,12 +4,14 @@ import { axiosInstance } from '../config/api';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 import { createRoot } from 'react-dom/client';
+import { useToast } from '../context/ToastContext';
 
 import ModernMinimalist from './certificate-templates/ModernMinimalist';
 import CyberpunkGrid from './certificate-templates/CyberpunkGrid';
 import ExecutiveGlass from './certificate-templates/ExecutiveGlass';
 
 export default function DownloadOffscreenButton({ credentialId, className }) {
+  const { showToast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -74,7 +76,7 @@ export default function DownloadOffscreenButton({ credentialId, className }) {
 
     } catch (err) {
       console.error(err);
-      alert('Failed to download PDF');
+      showToast('Failed to download PDF', 'error');
     } finally {
       setIsDownloading(false);
     }

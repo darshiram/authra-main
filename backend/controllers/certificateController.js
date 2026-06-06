@@ -2,6 +2,7 @@ import Certificate from '../models/Certificate.js';
 import User from '../models/User.js';
 import crypto from 'crypto';
 import sendEmail from '../utils/sendEmail.js';
+import { logActivity } from '../utils/logger.js';
 
 // Generate a unique credential ID like AUT-8X92-MLK1-009A
 const generateCredentialId = () => {
@@ -78,7 +79,8 @@ export const issueCertificates = async (req, res) => {
         additionalDetails: {
           skills: additionalDetails?.skills || '',
           college: additionalDetails?.college || '',
-          eventName: additionalDetails?.eventName || ''
+          eventName: additionalDetails?.eventName || '',
+          rank: recipient.rank || additionalDetails?.rank || ''
         }
       });
 
@@ -108,31 +110,42 @@ export const issueCertificates = async (req, res) => {
     }).catch(err => console.error("Failed to send organization email:", err));
 
     // Email to Recipients
-    for (const cert of issuedCertificates) {
+    const emailPromises = issuedCertificates.map(async (cert) => {
       const verifyUrl = `${frontendUrl}/verify/${cert.credentialId}`;
       const title = cert.additionalDetails?.title || cert.eventName || 'Certificate';
       
-      sendEmail({
-        email: cert.recipientEmail,
-        subject: `You have received a new certificate: ${title}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
-            <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-              <h2 style="color: #ffffff; margin: 0;">${req.user.name || req.user.username} issued you a certificate!</h2>
-            </div>
-            <div style="padding: 30px; background-color: #ffffff; color: #334155;">
-              <p>Hi ${cert.recipientName},</p>
-              <p>You have been awarded the <strong>${title}</strong> certificate.</p>
-              <p>You can view, verify, and download your certificate using the link below:</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${verifyUrl}" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Certificate</a>
+      try {
+        await sendEmail({
+          email: cert.recipientEmail,
+          subject: `You have received a new certificate: ${title}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+              <div style="background-color: #0f172a; padding: 20px; text-align: center;">
+                <h2 style="color: #ffffff; margin: 0;">${req.user.name || req.user.username} issued you a certificate!</h2>
               </div>
-              <p>Credential ID: <code>${cert.credentialId}</code></p>
+              <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+                <p>Hi ${cert.recipientName},</p>
+                <p>You have been awarded the <strong>${title}</strong> certificate.</p>
+                <p>You can view, verify, and download your certificate using the link below:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${verifyUrl}" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Certificate</a>
+                </div>
+                <p>Credential ID: <code>${cert.credentialId}</code></p>
+              </div>
             </div>
-          </div>
-        `
-      }).catch(err => console.error("Failed to send recipient email:", err));
-    }
+          `
+        });
+        
+        cert.emailSent = true;
+        await cert.save();
+      } catch (err) {
+        console.error("Failed to send recipient email:", err);
+      }
+    });
+
+    await Promise.all(emailPromises);
+
+    await logActivity(req, 'ISSUE_CERTIFICATE', `Issued ${issuedCertificates.length} certificate(s)`);
 
     res.status(201).json({
       message: `Successfully issued ${issuedCertificates.length} certificate(s)`,

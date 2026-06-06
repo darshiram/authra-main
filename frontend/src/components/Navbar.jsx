@@ -159,6 +159,16 @@ export default function Navbar() {
                         Public Profile
                       </Link>
                     )}
+                    {(user.role === 'Admin' || user.role === 'SuperAdmin') && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="flex items-center gap-3 w-full p-2 text-sm text-authra-text-light dark:text-[#F5F8FF] hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors text-indigo-500 font-medium"
+                      >
+                        <Settings className="w-4 h-4 text-indigo-500" />
+                        Admin Panel
+                      </Link>
+                    )}
                     <Link
                       to="/settings"
                       onClick={() => setIsProfileMenuOpen(false)}

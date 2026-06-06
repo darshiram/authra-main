@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '../config/api';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 import Sidebar from '../components/dashboard/Sidebar';
 import Header from '../components/dashboard/Header';
@@ -14,6 +15,7 @@ import SettingsTab from '../components/dashboard/SettingsTab';
 import RequestDesignModal from '../components/dashboard/RequestDesignModal';
 
 export default function Dashboard() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [theme, setTheme] = useState('dark');
   const [user, setUser] = useState(null);
@@ -79,7 +81,7 @@ export default function Dashboard() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB limit');
+      showToast('File size exceeds 5MB limit', 'error');
       return;
     }
 
@@ -93,7 +95,7 @@ export default function Dashboard() {
       });
       setSettingsForm(prev => ({ ...prev, logoUrl: res.data.url }));
     } catch (err) {
-      alert(err.response?.data?.message || 'Error uploading logo');
+      showToast(err.response?.data?.message || 'Error uploading logo', 'error');
     } finally {
       setIsUploadingLogo(false);
     }
@@ -104,7 +106,7 @@ export default function Dashboard() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB limit');
+      showToast('File size exceeds 5MB limit', 'error');
       return;
     }
 
@@ -118,7 +120,7 @@ export default function Dashboard() {
       });
       setSettingsForm(prev => ({ ...prev, bannerUrl: res.data.url }));
     } catch (err) {
-      alert(err.response?.data?.message || 'Error uploading banner');
+      showToast(err.response?.data?.message || 'Error uploading banner', 'error');
     } finally {
       setIsUploadingBanner(false);
     }
@@ -152,9 +154,9 @@ export default function Dashboard() {
         gallery: settingsForm.gallery,
       });
       setUser(res.data);
-      alert('Settings saved successfully!');
+      showToast('Settings saved successfully!', 'success');
     } catch (err) {
-      alert(err.response?.data?.message || 'Error saving settings');
+      showToast(err.response?.data?.message || 'Error saving settings', 'error');
     } finally {
       setIsSavingSettings(false);
     }
@@ -169,12 +171,12 @@ export default function Dashboard() {
         recipients: issueRecipients.filter(r => r.name && r.email),
         additionalDetails
       });
-      alert(res.data.message);
+      showToast(res.data.message, 'success');
       setIssueRecipients([{ name: '', email: '' }]);
       setAdditionalDetails({ skills: '', college: '', eventName: '' });
       setActiveTab('overview');
     } catch (err) {
-      alert(err.response?.data?.message || 'Error issuing certificates');
+      showToast(err.response?.data?.message || 'Error issuing certificates', 'error');
     } finally {
       setIsIssuing(false);
     }
@@ -191,7 +193,7 @@ export default function Dashboard() {
       });
 
       if (!res.data.keyId) {
-        alert("Razorpay is not configured on the backend. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your .env file to enable actual payments.");
+        showToast("Razorpay is not configured on the backend. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your .env file to enable actual payments.", "error");
         return;
       }
 
@@ -211,13 +213,13 @@ export default function Dashboard() {
               extraCerts: certsAmount
             });
             if (verifyRes.data.success) {
-              alert(`Payment successful! ${certsAmount} extra certificates have been added to your limit.`);
+              showToast(`Payment successful! ${certsAmount} extra certificates have been added to your limit.`, 'success');
               setShowQuantitySelector(false);
               window.location.reload();
             }
           } catch (err) {
             console.error(err);
-            alert("Payment verification failed: " + (err.response?.data?.message || err.message));
+            showToast("Payment verification failed: " + (err.response?.data?.message || err.message), 'error');
           }
         },
         theme: {
@@ -240,7 +242,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Error initiating payment.");
+      showToast(error.response?.data?.message || "Error initiating payment.", 'error');
     }
   };
 
@@ -397,7 +399,24 @@ export default function Dashboard() {
     }
 
     if (activeTab === 'bulk') {
-      return <BulkIssueTab />;
+      return (
+        <BulkIssueTab
+          user={user}
+          settingsForm={settingsForm}
+          issueRecipients={issueRecipients}
+          setIssueRecipients={setIssueRecipients}
+          selectedTemplate={selectedTemplate}
+          setSelectedTemplate={setSelectedTemplate}
+          issueDate={issueDate}
+          setIssueDate={setIssueDate}
+          additionalDetails={additionalDetails}
+          setAdditionalDetails={setAdditionalDetails}
+          skillInput={skillInput}
+          setSkillInput={setSkillInput}
+          isIssuing={isIssuing}
+          handleIssueCertificates={handleIssueCertificates}
+        />
+      );
     }
 
     if (activeTab === 'sent') {
