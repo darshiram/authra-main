@@ -57,13 +57,13 @@ export default function DownloadPDFButton({ targetId, fileName }) {
     <button
       onClick={handleDownload}
       disabled={isDownloading}
-      className="group relative flex items-center justify-center w-10 h-10 hover:w-36 bg-brand-steel/10 hover:bg-brand-steel text-brand-steel hover:text-white rounded-full transition-all duration-300 overflow-hidden shadow-sm disabled:opacity-50"
+      className="group/pdf relative flex items-center justify-center w-10 h-10 hover:w-36 bg-brand-steel/10 hover:bg-brand-steel text-brand-steel hover:text-white rounded-full transition-all duration-300 overflow-hidden shadow-sm disabled:opacity-50"
       title="Download PDF"
     >
       <div className="absolute left-2.5 flex items-center justify-center">
         {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
       </div>
-      <span className="opacity-0 group-hover:opacity-100 whitespace-nowrap ml-6 text-sm font-medium transition-opacity duration-300">
+      <span className="opacity-0 group-hover/pdf:opacity-100 whitespace-nowrap ml-6 text-sm font-medium transition-opacity duration-300">
         {isDownloading ? 'Generating...' : 'Download PDF'}
       </span>
     </button>

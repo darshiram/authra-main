@@ -10,7 +10,8 @@ import {
   updateSystemSettings,
   getSystemLogs,
   getUserDetails,
-  updateUserDetails
+  updateUserDetails,
+  getEmailLogs
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -29,5 +30,6 @@ router.get('/design-requests', getDesignRequests);
 router.get('/settings', getSystemSettings);
 router.put('/settings', updateSystemSettings);
 router.get('/logs', getSystemLogs);
+router.get('/email-logs', getEmailLogs);
 
 export default router;

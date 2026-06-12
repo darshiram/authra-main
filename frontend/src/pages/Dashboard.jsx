@@ -70,7 +70,7 @@ export default function Dashboard() {
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
-  
+
   const [showRequestDesignModal, setShowRequestDesignModal] = useState(false);
   const [requestDesignForm, setRequestDesignForm] = useState({ description: '', link: '' });
 
@@ -247,7 +247,7 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 
+    const savedTheme = localStorage.getItem('theme') ||
       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     setTheme(savedTheme);
     if (savedTheme === 'dark') document.documentElement.classList.add('dark');
@@ -272,21 +272,21 @@ export default function Dashboard() {
             aboutOrg: res.data.aboutOrg || '',
             gallery: res.data.gallery || []
           });
-          
+
           const certsRes = await axiosInstance.get('/certificates/issued');
           const certs = certsRes.data || [];
           setIssuedCertificates(certs);
-          
+
           const now = new Date();
           const currentMonth = now.getMonth();
           const currentYear = now.getFullYear();
-          
+
           let thisMonthCount = 0;
           let lastMonthCount = 0;
-          
+
           const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
           const graphDataMap = new Map();
-          
+
           for (let i = 5; i >= 0; i--) {
             const d = new Date(currentYear, currentMonth - i, 1);
             const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
@@ -297,13 +297,13 @@ export default function Dashboard() {
             const date = new Date(cert.issueDate);
             const m = date.getMonth();
             const y = date.getFullYear();
-            
+
             if (y === currentYear && m === currentMonth) {
               thisMonthCount++;
             } else if ((y === currentYear && m === currentMonth - 1) || (currentMonth === 0 && y === currentYear - 1 && m === 11)) {
               lastMonthCount++;
             }
-            
+
             const key = `${monthNames[m]} ${y}`;
             if (graphDataMap.has(key)) {
               const data = graphDataMap.get(key);
@@ -311,14 +311,14 @@ export default function Dashboard() {
               graphDataMap.set(key, data);
             }
           });
-          
+
           let percentageChange = 0;
           if (lastMonthCount === 0) {
             percentageChange = thisMonthCount > 0 ? 100 : 0;
           } else {
             percentageChange = Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100);
           }
-          
+
           setMetrics({
             total: certs.length,
             thisMonth: thisMonthCount,
@@ -350,7 +350,7 @@ export default function Dashboard() {
   const renderContent = () => {
     if (activeTab === 'overview') {
       return (
-        <OverviewTab 
+        <OverviewTab
           user={user}
           metrics={metrics}
           issuedCertificates={issuedCertificates}
@@ -364,7 +364,7 @@ export default function Dashboard() {
         />
       );
     }
-    
+
     if (activeTab === 'issue') {
       return (
         <IssueTab
@@ -452,7 +452,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen w-full bg-[#f8fafc] dark:bg-[#090b11] overflow-hidden font-inter">
-      <Sidebar 
+      <Sidebar
         activeTab={activeTab}
         handleTabChange={handleTabChange}
         isMobileMenuOpen={isMobileMenuOpen}
@@ -462,7 +462,7 @@ export default function Dashboard() {
       />
 
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <Header 
+        <Header
           user={user}
           isProfileMenuOpen={isProfileMenuOpen}
           setIsProfileMenuOpen={setIsProfileMenuOpen}

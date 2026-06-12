@@ -2,6 +2,7 @@ import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
+import SiteMetrics from './components/SiteMetrics';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Footer from './components/Footer';
@@ -32,9 +33,10 @@ function App() {
     <HelmetProvider>
       <ToastProvider>
         <Router>
-        <div className="relative overflow-hidden w-full min-h-screen bg-authra-bg-light dark:bg-authra-bg-dark transition-colors duration-300 font-inter text-authra-text-light dark:text-authra-text-dark">
-          <Routes>
-            <Route path="/" element={
+          <SiteMetrics />
+          <div className="relative overflow-hidden w-full min-h-screen bg-authra-bg-light dark:bg-authra-bg-dark transition-colors duration-300 font-inter text-authra-text-light dark:text-authra-text-dark">
+            <Routes>
+              <Route path="/" element={
               <>
                 <Navbar />
                 <Home />

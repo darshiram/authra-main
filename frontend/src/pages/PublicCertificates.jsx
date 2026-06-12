@@ -5,18 +5,45 @@ import { ShieldCheck, Calendar, ArrowLeft } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { PublicNavbar, PublicFooter } from './PublicProfile';
 
+const LinkedinIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+  </svg>
+);
+
 export default function PublicCertificates() {
   const { username } = useParams();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await axiosInstance.get('/users/me');
+        setIsLoggedIn(true);
+      } catch (err) {
+        setIsLoggedIn(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await axiosInstance.get(`/users/${username}`);
+        const userData = res.data;
+
+        if (userData.accountType === 'organization' || userData.role === 'Admin' || userData.role === 'SuperAdmin') {
+          throw new Error('This profile is not available or does not exist.');
+        }
+
         setUser({
-          ...res.data,
+          ...userData,
           avatar: res.data.name ? res.data.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 'U',
         });
       } catch (err) {
@@ -98,6 +125,20 @@ export default function PublicCertificates() {
     );
   }
 
+  const handleAddToLinkedIn = (cert) => {
+    const title = encodeURIComponent(cert.title);
+    const org = encodeURIComponent(cert.issuer);
+    const issueDate = new Date(cert.issueDate);
+    const year = issueDate.getFullYear() || '';
+    const month = (issueDate.getMonth() + 1) || '';
+    const certUrl = encodeURIComponent(window.location.origin + `/verify/${cert.id}`);
+    const certId = encodeURIComponent(cert.id);
+    
+    const linkedInUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${title}&organizationName=${org}&issueYear=${year}&issueMonth=${month}&certUrl=${certUrl}&certId=${certId}`;
+    
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <>
       <Helmet>
@@ -163,9 +204,20 @@ export default function PublicCertificates() {
                       <Calendar className="w-3.5 h-3.5" />
                       {cert.issueDate}
                     </div>
-                    <button className="text-brand-steel hover:text-brand-ice text-xs font-medium transition-colors">
-                      Verify
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {isLoggedIn && (
+                        <button 
+                          onClick={() => handleAddToLinkedIn(cert)}
+                          className="text-brand-steel hover:text-brand-ice flex items-center gap-1 text-sm font-medium transition-colors"
+                          title="Add to LinkedIn"
+                        >
+                          <LinkedinIcon className="w-4 h-4" /> Add
+                        </button>
+                      )}
+                      <button className="text-brand-steel hover:text-brand-ice text-sm font-medium transition-colors">
+                        Verify
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -114,8 +114,14 @@ export default function PublicProfile() {
     const fetchUser = async () => {
       try {
         const res = await axiosInstance.get(`/users/${username}`);
+        const userData = res.data;
+
+        if (userData.accountType === 'organization' || userData.role === 'Admin' || userData.role === 'SuperAdmin') {
+          throw new Error('This profile is not available or does not exist.');
+        }
+
         setUser({
-          ...res.data,
+          ...userData,
           avatar: res.data.name ? res.data.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 'U',
           location: res.data.location || 'Remote',
           skills: res.data.skills?.length > 0 ? res.data.skills : ['React', 'Node.js', 'MongoDB', 'AWS', 'Docker', 'TypeScript'],

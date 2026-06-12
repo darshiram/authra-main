@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Building2, Award, Settings, CreditCard, Search, ArrowUpRight, ArrowDownRight, Edit2, Shield, Eye, Palette, Activity, Megaphone } from 'lucide-react';
+import { Users, Building2, Award, Settings, CreditCard, Search, ArrowUpRight, ArrowDownRight, Edit2, Shield, Eye, Palette, Activity, Megaphone, Mail } from 'lucide-react';
 import { axiosInstance } from '../config/api';
 import { useToast } from '../context/ToastContext';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -20,6 +20,12 @@ export default function AdminDashboard() {
   const [systemLogs, setSystemLogs] = useState({ data: [], total: 0, page: 1, pages: 1 });
   const [logSearch, setLogSearch] = useState('');
   const [logActionType, setLogActionType] = useState('');
+
+  // Email Logs State
+  const [emailLogs, setEmailLogs] = useState({ data: [], total: 0, page: 1, pages: 1 });
+  const [emailLogSearch, setEmailLogSearch] = useState('');
+  const [emailLogStatus, setEmailLogStatus] = useState('');
+  const [emailDetailsModal, setEmailDetailsModal] = useState({ isOpen: false, email: null });
 
   // Broadcast State
   const [broadcastAudience, setBroadcastAudience] = useState('organization');
@@ -59,7 +65,8 @@ export default function AdminDashboard() {
     if (activeTab === 'designs') fetchDesignRequests();
     if (activeTab === 'settings') fetchSettings();
     if (activeTab === 'logs') fetchLogs();
-  }, [activeTab, users.page, filterType, filterPlan, systemLogs.page, logActionType]);
+    if (activeTab === 'email-logs') fetchEmailLogs();
+  }, [activeTab, users.page, filterType, filterPlan, systemLogs.page, logActionType, emailLogs.page, emailLogStatus]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -105,6 +112,15 @@ export default function AdminDashboard() {
       setSystemLogs(data);
     } catch (err) {
       showToast('Error loading logs', 'error');
+    }
+  };
+
+  const fetchEmailLogs = async () => {
+    try {
+      const { data } = await axiosInstance.get(`/admin/email-logs?page=${emailLogs.page}&search=${emailLogSearch}&status=${emailLogStatus}`);
+      setEmailLogs(data);
+    } catch (err) {
+      showToast('Error loading email logs', 'error');
     }
   };
 
@@ -186,6 +202,7 @@ export default function AdminDashboard() {
               { id: 'users', label: 'Users & Orgs', icon: <Users className="w-4 h-4" /> },
               { id: 'designs', label: 'Design Requests', icon: <Palette className="w-4 h-4" /> },
               { id: 'logs', label: 'Activity Logs', icon: <Activity className="w-4 h-4" /> },
+              { id: 'email-logs', label: 'Email Logs', icon: <Mail className="w-4 h-4" /> },
               { id: 'broadcast', label: 'Broadcast', icon: <Megaphone className="w-4 h-4" /> },
               { id: 'settings', label: 'System Settings', icon: <Settings className="w-4 h-4" /> }
             ].map(tab => (
@@ -512,6 +529,87 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {activeTab === 'email-logs' && (
+          <div className="bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-authra-border-dark rounded-2xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-authra-border-light dark:border-authra-border-dark flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
+              <h2 className="text-lg font-semibold text-authra-text-light dark:text-white whitespace-nowrap">Email Logs</h2>
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <select 
+                  value={emailLogStatus}
+                  onChange={(e) => setEmailLogStatus(e.target.value)}
+                  className="bg-authra-bg-light dark:bg-black border border-authra-border-light dark:border-authra-border-dark rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-steel text-authra-text-light dark:text-white"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="sent">Sent</option>
+                  <option value="failed">Failed</option>
+                </select>
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-4 h-4 absolute left-3 top-3 text-authra-text-sec-light" />
+                  <input 
+                    type="text" 
+                    placeholder="Search by email or subject..." 
+                    value={emailLogSearch}
+                    onChange={(e) => setEmailLogSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && fetchEmailLogs()}
+                    className="w-full bg-authra-bg-light dark:bg-black border border-authra-border-light dark:border-authra-border-dark rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-brand-steel text-authra-text-light dark:text-white"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-authra-bg-light/50 dark:bg-black/50 text-xs uppercase text-authra-text-sec-light dark:text-authra-text-sec-dark">
+                  <tr>
+                    <th className="px-6 py-4 font-semibold">Sent At</th>
+                    <th className="px-6 py-4 font-semibold">To</th>
+                    <th className="px-6 py-4 font-semibold">Subject</th>
+                    <th className="px-6 py-4 font-semibold">Status</th>
+                    <th className="px-6 py-4 font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-authra-border-light dark:divide-authra-border-dark">
+                  {emailLogs.data.map(log => (
+                    <tr key={log._id} className="hover:bg-authra-bg-light/30 dark:hover:bg-white/[0.02]">
+                      <td className="px-6 py-4 text-sm text-authra-text-sec-light dark:text-[#9AA8D6] whitespace-nowrap">
+                        {new Date(log.sentAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-authra-text-light dark:text-white font-medium">
+                        {log.to}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-authra-text-sec-light dark:text-[#9AA8D6] max-w-xs truncate">
+                        {log.subject}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          log.status === 'sent' ? 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' :
+                          'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400'
+                        }`}>
+                          {log.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button 
+                          onClick={() => setEmailDetailsModal({ isOpen: true, email: log })}
+                          className="px-2 py-1 bg-brand-steel/10 text-brand-steel rounded text-xs font-medium hover:bg-brand-steel/20 transition-colors flex items-center gap-1"
+                        >
+                          <Eye className="w-3 h-3" /> View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {emailLogs.data.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-8 text-center text-sm text-authra-text-sec-light">
+                        No email logs found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'settings' && systemSettings && (
           <div className="bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-authra-border-dark rounded-2xl p-6 shadow-sm max-w-4xl">
              <div className="flex justify-between items-center mb-6">
@@ -734,6 +832,51 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Email Details Modal */}
+      {emailDetailsModal.isOpen && emailDetailsModal.email && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-authra-border-dark rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <h3 className="text-xl font-bold text-authra-text-light dark:text-white mb-4">Email Details</h3>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <p className="text-xs text-authra-text-sec-light dark:text-authra-text-sec-dark font-medium uppercase mb-1">To</p>
+                <p className="text-sm text-authra-text-light dark:text-white bg-authra-bg-light dark:bg-black p-2 rounded-lg border border-authra-border-light dark:border-authra-border-dark">{emailDetailsModal.email.to}</p>
+              </div>
+              <div>
+                <p className="text-xs text-authra-text-sec-light dark:text-authra-text-sec-dark font-medium uppercase mb-1">Subject</p>
+                <p className="text-sm text-authra-text-light dark:text-white bg-authra-bg-light dark:bg-black p-2 rounded-lg border border-authra-border-light dark:border-authra-border-dark">{emailDetailsModal.email.subject}</p>
+              </div>
+              {emailDetailsModal.email.error && (
+                <div>
+                  <p className="text-xs text-red-500 font-medium uppercase mb-1">Error</p>
+                  <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200 dark:border-red-900/30">{emailDetailsModal.email.error}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-authra-text-sec-light dark:text-authra-text-sec-dark font-medium uppercase mb-1">Content</p>
+                <div className="bg-authra-bg-light dark:bg-black p-4 rounded-lg border border-authra-border-light dark:border-authra-border-dark prose prose-sm dark:prose-invert max-w-none max-h-96 overflow-y-auto">
+                  {emailDetailsModal.email.html ? (
+                    <div dangerouslySetInnerHTML={{ __html: emailDetailsModal.email.html }} />
+                  ) : (
+                    <pre className="whitespace-pre-wrap font-sans">{emailDetailsModal.email.message}</pre>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <button 
+                onClick={() => setEmailDetailsModal({ isOpen: false, email: null })}
+                className="bg-brand-steel hover:bg-brand-ice text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

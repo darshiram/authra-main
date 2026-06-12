@@ -7,11 +7,32 @@ import CyberpunkGrid from '../components/certificate-templates/CyberpunkGrid';
 import ExecutiveGlass from '../components/certificate-templates/ExecutiveGlass';
 import DownloadPDFButton from '../components/DownloadPDFButton';
 
+const LinkedinIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+  </svg>
+);
+
 export default function VerifyCertificate() {
   const { credentialId } = useParams();
   const [certificate, setCertificate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await axiosInstance.get('/users/me');
+        setIsLoggedIn(true);
+      } catch (err) {
+        setIsLoggedIn(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     const verifyCertificate = async () => {
@@ -58,7 +79,7 @@ export default function VerifyCertificate() {
       eventName: certificate.additionalDetails?.eventName,
       rank: certificate.additionalDetails?.rank || '',
       skills: certificate.additionalDetails?.skills,
-      issueDate: new Date(certificate.issueDate).toLocaleDateString(),
+      issueDate: certificate.issueDate,
       credentialId: certificate.credentialId
     };
 
@@ -68,6 +89,20 @@ export default function VerifyCertificate() {
       case 'executive': return <ExecutiveGlass data={data} />;
       default: return <ModernMinimalist data={data} />;
     }
+  };
+
+  const handleAddToLinkedIn = () => {
+    const title = encodeURIComponent(certificate.additionalDetails?.title || certificate.eventName || 'Certificate of Completion');
+    const org = encodeURIComponent(certificate.issuerId?.name || 'Authra Issuer');
+    const issueDate = new Date(certificate.issueDate);
+    const year = issueDate.getFullYear();
+    const month = issueDate.getMonth() + 1;
+    const certUrl = encodeURIComponent(window.location.href);
+    const certId = encodeURIComponent(certificate.credentialId);
+    
+    const linkedInUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${title}&organizationName=${org}&issueYear=${year}&issueMonth=${month}&certUrl=${certUrl}&certId=${certId}`;
+    
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -88,7 +123,21 @@ export default function VerifyCertificate() {
 
         {/* Certificate Display */}
         <div className="w-full relative rounded-xl overflow-hidden shadow-2xl shadow-brand-steel/5 border border-authra-border-light dark:border-authra-border-dark bg-[#0A0C10] group">
-          <div className="absolute top-4 right-4 z-50">
+          <div className="absolute top-4 right-4 z-50 flex items-center gap-3">
+            {isLoggedIn && (
+              <button
+                onClick={handleAddToLinkedIn}
+                className="group/linkedin relative flex items-center justify-center w-10 h-10 hover:w-36 bg-brand-steel/10 hover:bg-brand-steel text-brand-steel hover:text-white rounded-full transition-all duration-300 overflow-hidden shadow-sm"
+                title="Add to LinkedIn Profile"
+              >
+                <div className="absolute left-2.5 flex items-center justify-center">
+                  <LinkedinIcon className="w-5 h-5" />
+                </div>
+                <span className="opacity-0 group-hover/linkedin:opacity-100 whitespace-nowrap ml-6 text-sm font-medium transition-opacity duration-300">
+                  Add to Profile
+                </span>
+              </button>
+            )}
             <DownloadPDFButton 
               targetId={`cert-${certificate.credentialId}`} 
               fileName={`${certificate.recipientName}_Certificate`} 

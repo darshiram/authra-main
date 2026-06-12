@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import EmailLog from '../models/EmailLog.js';
 
 const sendEmail = async (options) => {
   // Create a transporter
@@ -21,10 +22,35 @@ const sendEmail = async (options) => {
     html: options.html,
   };
 
-  // Send email
-  const info = await transporter.sendMail(message);
+  try {
+    // Send email
+    const info = await transporter.sendMail(message);
 
-  console.log('Message sent: %s', info.messageId);
+    console.log('Message sent: %s', info.messageId);
+
+    // Log success
+    await EmailLog.create({
+      to: options.email,
+      subject: options.subject,
+      message: options.message,
+      html: options.html,
+      status: 'sent'
+    });
+  } catch (error) {
+    console.error('Error sending email:', error);
+
+    // Log failure
+    await EmailLog.create({
+      to: options.email,
+      subject: options.subject,
+      message: options.message,
+      html: options.html,
+      status: 'failed',
+      error: error.message
+    });
+
+    throw error;
+  }
 };
 
 export default sendEmail;

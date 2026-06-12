@@ -3,6 +3,7 @@ import Certificate from '../models/Certificate.js';
 import SiteSettings from '../models/SiteSettings.js';
 import DesignRequest from '../models/DesignRequest.js';
 import ActivityLog from '../models/ActivityLog.js';
+import EmailLog from '../models/EmailLog.js';
 import sendEmail from '../utils/sendEmail.js';
 
 // @desc    Broadcast a feature update to all organizations
@@ -309,6 +310,46 @@ export const updateUserDetails = async (req, res) => {
     }
     
     res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Get email logs
+// @route   GET /api/v1/admin/email-logs
+// @access  Private/Admin
+export const getEmailLogs = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const startIndex = (page - 1) * limit;
+
+    const query = {};
+    if (req.query.search) {
+      query.$or = [
+        { to: { $regex: req.query.search, $options: 'i' } },
+        { subject: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+    
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+
+    const total = await EmailLog.countDocuments(query);
+    const logs = await EmailLog.find(query)
+      .sort({ sentAt: -1 })
+      .skip(startIndex)
+      .limit(limit);
+
+    res.json({
+      success: true,
+      count: logs.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: logs
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

@@ -176,6 +176,20 @@ export default function UserProfile() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleAddToLinkedIn = (cert) => {
+    const title = encodeURIComponent(cert.title);
+    const org = encodeURIComponent(cert.issuer);
+    const issueDate = new Date(cert.issueDate);
+    const year = issueDate.getFullYear() || '';
+    const month = (issueDate.getMonth() + 1) || '';
+    const certUrl = encodeURIComponent(window.location.origin + `/verify/${cert.id}`);
+    const certId = encodeURIComponent(cert.id);
+    
+    const linkedInUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${title}&organizationName=${org}&issueYear=${year}&issueMonth=${month}&certUrl=${certUrl}&certId=${certId}`;
+    
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <>
       <Helmet>
@@ -397,17 +411,28 @@ export default function UserProfile() {
                         <Calendar className="w-3.5 h-3.5" />
                         Issued: {cert.issueDate}
                       </div>
-                      {cert.verified ? (
-                        <Link to={`/verify/${cert.id}`} className="text-brand-steel hover:text-brand-ice flex items-center gap-1 text-sm font-medium transition-colors">
-                          Verify <ExternalLink className="w-3.5 h-3.5" />
-                        </Link>
-                      ) : (cert.fileUrl || cert.link) ? (
-                        <a href={cert.fileUrl || cert.link} target="_blank" rel="noopener noreferrer" className="text-brand-steel hover:text-brand-ice flex items-center gap-1 text-sm font-medium transition-colors">
-                          View Credential <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      ) : (
-                        <span className="text-authra-text-sec-light dark:text-authra-text-sec-dark text-xs font-medium">Self Reported</span>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {cert.verified && (
+                          <button 
+                            onClick={() => handleAddToLinkedIn(cert)}
+                            className="text-brand-steel hover:text-brand-ice flex items-center gap-1 text-sm font-medium transition-colors"
+                            title="Add to LinkedIn"
+                          >
+                            <LinkedinIcon className="w-4 h-4" /> Add
+                          </button>
+                        )}
+                        {cert.verified ? (
+                          <Link to={`/verify/${cert.id}`} className="text-brand-steel hover:text-brand-ice flex items-center gap-1 text-sm font-medium transition-colors">
+                            Verify <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
+                        ) : (cert.fileUrl || cert.link) ? (
+                          <a href={cert.fileUrl || cert.link} target="_blank" rel="noopener noreferrer" className="text-brand-steel hover:text-brand-ice flex items-center gap-1 text-sm font-medium transition-colors">
+                            View <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        ) : (
+                          <span className="text-authra-text-sec-light dark:text-authra-text-sec-dark text-xs font-medium">Self Reported</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
