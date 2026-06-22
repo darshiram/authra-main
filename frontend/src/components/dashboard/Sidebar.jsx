@@ -10,7 +10,8 @@ import {
   Users,
   Moon,
   Sun,
-  Settings
+  Settings,
+  Palette
 } from 'lucide-react';
 import horizontalLogo from '../../assets/horziontal logo.png';
 
@@ -77,6 +78,14 @@ export default function Sidebar({
           >
             <FileBadge className="w-5 h-5" />
             My Templates
+          </button>
+
+          <button 
+            onClick={() => handleTabChange('design-requests')}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeTab === 'design-requests' ? 'bg-brand-steel/10 text-brand-steel' : 'text-authra-text-sec-light dark:text-authra-text-sec-dark hover:bg-authra-border-light/50 dark:hover:bg-white/5 hover:text-authra-text-light dark:hover:text-white'}`}
+          >
+            <Palette className="w-5 h-5" />
+            Design Requests
           </button>
 
           <button 

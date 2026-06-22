@@ -11,9 +11,7 @@ import {
   Eye,
   AlertCircle
 } from 'lucide-react';
-import ModernMinimalist from '../certificate-templates/ModernMinimalist';
-import CyberpunkGrid from '../certificate-templates/CyberpunkGrid';
-import ExecutiveGlass from '../certificate-templates/ExecutiveGlass';
+import { getTemplateComponent, getDefaultTemplates } from '../certificate-templates/TemplateRegistry';
 
 export default function IssueTab({
   user,
@@ -41,6 +39,10 @@ export default function IssueTab({
     issueDate: issueDate,
     credentialId: "PREVIEW-1234"
   };
+
+  const defaultTemplates = getDefaultTemplates();
+  const customTemplates = user?.customTemplates || [];
+  const allTemplates = [...defaultTemplates, ...customTemplates];
 
   return (
     <div className="max-w-[1400px] mx-auto">
@@ -112,9 +114,9 @@ export default function IssueTab({
                       onChange={(e) => setSelectedTemplate(e.target.value)}
                       className="w-full bg-white dark:bg-black border border-authra-border-light dark:border-authra-border-dark rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-brand-steel focus:ring-1 focus:ring-brand-steel transition-all text-authra-text-light dark:text-white appearance-none"
                     >
-                      <option value="modern">Modern Minimalist</option>
-                      <option value="cyberpunk">Cyberpunk Grid</option>
-                      <option value="executive">Executive Glass</option>
+                      {allTemplates.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -310,9 +312,10 @@ export default function IssueTab({
             <svg viewBox="0 0 1000 772.72" className="w-full h-auto block">
               <foreignObject width="1000" height="772.72">
                 <div className="w-[1000px] h-[772.72px] origin-top-left pointer-events-none">
-                  {selectedTemplate === 'modern' && <ModernMinimalist data={previewData} />}
-                  {selectedTemplate === 'cyberpunk' && <CyberpunkGrid data={previewData} />}
-                  {selectedTemplate === 'executive' && <ExecutiveGlass data={previewData} />}
+                  {(() => {
+                    const TemplateComponent = getTemplateComponent(selectedTemplate);
+                    return <TemplateComponent data={previewData} />;
+                  })()}
                 </div>
               </foreignObject>
             </svg>

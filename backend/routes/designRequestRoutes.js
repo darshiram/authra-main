@@ -31,4 +31,16 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// @desc    Get user's design requests
+// @route   GET /api/v1/design-requests
+// @access  Private
+router.get('/', protect, async (req, res) => {
+  try {
+    const requests = await DesignRequest.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    res.json(requests);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 export default router;

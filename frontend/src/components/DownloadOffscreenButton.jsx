@@ -6,9 +6,7 @@ import { jsPDF } from 'jspdf';
 import { createRoot } from 'react-dom/client';
 import { useToast } from '../context/ToastContext';
 
-import ModernMinimalist from './certificate-templates/ModernMinimalist';
-import CyberpunkGrid from './certificate-templates/CyberpunkGrid';
-import ExecutiveGlass from './certificate-templates/ExecutiveGlass';
+import { getTemplateComponent } from './certificate-templates/TemplateRegistry';
 
 export default function DownloadOffscreenButton({ credentialId, className }) {
   const { showToast } = useToast();
@@ -40,10 +38,7 @@ export default function DownloadOffscreenButton({ credentialId, className }) {
 
       const root = createRoot(container);
       
-      let Template;
-      if (cert.templateId === 'cyberpunk') Template = CyberpunkGrid;
-      else if (cert.templateId === 'executive') Template = ExecutiveGlass;
-      else Template = ModernMinimalist;
+      const Template = getTemplateComponent(cert.templateId);
 
       // Render the component
       await new Promise(resolve => {

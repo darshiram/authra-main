@@ -180,9 +180,11 @@ export default function PublicProfile() {
     verified: true,
     color: cert.templateId === 'cyberpunk' ? 'from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20' : 
            cert.templateId === 'executive' ? 'from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20' :
-           'from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20',
+           cert.templateId === 'modern' ? 'from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20' :
+           'from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20',
     borderColor: cert.templateId === 'cyberpunk' ? 'border-cyan-500/30' : 
-                 cert.templateId === 'executive' ? 'border-blue-500/30' : 'border-emerald-500/30',
+                 cert.templateId === 'executive' ? 'border-blue-500/30' : 
+                 cert.templateId === 'modern' ? 'border-emerald-500/30' : 'border-amber-500/30',
     templateId: cert.templateId
   }));
   

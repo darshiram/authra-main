@@ -12,6 +12,7 @@ import TemplatesTab from '../components/dashboard/TemplatesTab';
 import BulkIssueTab from '../components/dashboard/BulkIssueTab';
 import SentTab from '../components/dashboard/SentTab';
 import SettingsTab from '../components/dashboard/SettingsTab';
+import DesignRequestsTab from '../components/dashboard/DesignRequestsTab';
 import RequestDesignModal from '../components/dashboard/RequestDesignModal';
 
 export default function Dashboard() {
@@ -435,6 +436,14 @@ export default function Dashboard() {
           isUploadingBanner={isUploadingBanner}
           handleLogoUpload={handleLogoUpload}
           handleBannerUpload={handleBannerUpload}
+        />
+      );
+    }
+
+    if (activeTab === 'design-requests') {
+      return (
+        <DesignRequestsTab
+          setShowRequestDesignModal={setShowRequestDesignModal}
         />
       );
     }

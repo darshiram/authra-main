@@ -31,6 +31,7 @@ export const getUserProfile = async (req, res) => {
       gallery: user.gallery,
       plan: user.plan,
       extraCertificates: user.extraCertificates,
+      customTemplates: user.customTemplates,
       hasGoogleLinked: !!user.googleId,
       hasGithubLinked: !!user.githubId,
     });
@@ -102,6 +103,7 @@ export const updateUserProfile = async (req, res) => {
       gallery: updatedUser.gallery,
       plan: updatedUser.plan,
       extraCertificates: updatedUser.extraCertificates,
+      customTemplates: updatedUser.customTemplates,
     });
   } else {
     res.status(404).json({ message: 'User not found' });

@@ -11,7 +11,8 @@ import {
   getSystemLogs,
   getUserDetails,
   updateUserDetails,
-  getEmailLogs
+  getEmailLogs,
+  updateDesignRequestStatus
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -27,6 +28,7 @@ router.get('/users/:id', getUserDetails);
 router.put('/users/:id', updateUserDetails);
 router.put('/users/:id/plan', updateUserPlan);
 router.get('/design-requests', getDesignRequests);
+router.put('/design-requests/:id', updateDesignRequestStatus);
 router.get('/settings', getSystemSettings);
 router.put('/settings', updateSystemSettings);
 router.get('/logs', getSystemLogs);

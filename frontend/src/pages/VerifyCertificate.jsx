@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { axiosInstance } from '../config/api';
 import { ShieldCheck, XCircle, ArrowLeft, Loader2, Award, Calendar, Layers, MapPin } from 'lucide-react';
-import ModernMinimalist from '../components/certificate-templates/ModernMinimalist';
-import CyberpunkGrid from '../components/certificate-templates/CyberpunkGrid';
-import ExecutiveGlass from '../components/certificate-templates/ExecutiveGlass';
+import { getTemplateComponent } from '../components/certificate-templates/TemplateRegistry';
 import DownloadPDFButton from '../components/DownloadPDFButton';
 
 const LinkedinIcon = ({ className }) => (
@@ -83,12 +81,8 @@ export default function VerifyCertificate() {
       credentialId: certificate.credentialId
     };
 
-    switch (certificate.templateId) {
-      case 'modern': return <ModernMinimalist data={data} />;
-      case 'cyberpunk': return <CyberpunkGrid data={data} />;
-      case 'executive': return <ExecutiveGlass data={data} />;
-      default: return <ModernMinimalist data={data} />;
-    }
+    const TemplateComponent = getTemplateComponent(certificate.templateId);
+    return <TemplateComponent data={data} />;
   };
 
   const handleAddToLinkedIn = () => {

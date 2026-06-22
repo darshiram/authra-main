@@ -77,6 +77,10 @@ const userSchema = new mongoose.Schema({
   bannerUrl: { type: String, default: '' },
   aboutOrg: { type: String },
   gallery: [String],
+  customTemplates: [{
+    id: String,
+    name: String
+  }],
   
   // Subscription fields
   plan: {

@@ -21,7 +21,6 @@ const certificateSchema = new mongoose.Schema({
   },
   templateId: {
     type: String,
-    enum: ['modern', 'cyberpunk', 'executive'],
     required: true
   },
   issueDate: {

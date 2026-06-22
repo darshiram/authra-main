@@ -38,6 +38,10 @@ export default function AdminDashboard() {
   const [sponsorDuration, setSponsorDuration] = useState(12);
   const [sponsorCerts, setSponsorCerts] = useState(100);
 
+  // Update Design Request Modal State
+  const [updateDesignModal, setUpdateDesignModal] = useState({ isOpen: false, request: null });
+  const [designUpdateForm, setDesignUpdateForm] = useState({ status: 'pending', adminFeedback: '', templateId: '', templateName: '' });
+
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -150,6 +154,30 @@ export default function AdminDashboard() {
     } catch (err) {
       showToast('Error issuing sponsorship', 'error');
     }
+  };
+
+  const handleUpdateDesignRequest = async (e) => {
+    e.preventDefault();
+    if (!updateDesignModal.request) return;
+    
+    try {
+      await axiosInstance.put(`/admin/design-requests/${updateDesignModal.request._id}`, designUpdateForm);
+      showToast('Design request updated successfully!', 'success');
+      setUpdateDesignModal({ isOpen: false, request: null });
+      fetchDesignRequests();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Error updating design request', 'error');
+    }
+  };
+
+  const openUpdateDesignModal = (req) => {
+    setDesignUpdateForm({
+      status: req.status || 'pending',
+      adminFeedback: req.adminFeedback || '',
+      templateId: req.templateId || '',
+      templateName: req.templateName || ''
+    });
+    setUpdateDesignModal({ isOpen: true, request: req });
   };
 
   const handleBroadcast = async (e) => {
@@ -435,11 +463,21 @@ export default function AdminDashboard() {
                        <span className="px-2 py-1 bg-yellow-500/10 text-yellow-600 text-xs font-semibold rounded capitalize">{req.status}</span>
                      </div>
                      <p className="text-sm text-authra-text-light dark:text-white mt-4 whitespace-pre-wrap">{req.description}</p>
-                     {req.link && (
-                       <a href={req.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand-steel hover:underline mt-4">
-                         View Reference <ArrowUpRight className="w-3 h-3" />
-                       </a>
-                     )}
+                     <div className="flex justify-between items-center mt-4">
+                       <div className="flex items-center gap-4">
+                         {req.link && (
+                           <a href={req.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand-steel hover:underline">
+                             View Reference <ArrowUpRight className="w-3 h-3" />
+                           </a>
+                         )}
+                       </div>
+                       <button 
+                         onClick={() => openUpdateDesignModal(req)}
+                         className="px-3 py-1.5 bg-brand-steel/10 hover:bg-brand-steel/20 text-brand-steel rounded-lg text-xs font-medium transition-colors"
+                       >
+                         Update Status
+                       </button>
+                     </div>
                    </div>
                  ))}
                </div>
@@ -877,6 +915,85 @@ export default function AdminDashboard() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Design Request Modal */}
+      {updateDesignModal.isOpen && updateDesignModal.request && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-[#0D0F16] border border-authra-border-light dark:border-authra-border-dark rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-authra-text-light dark:text-white mb-4">Update Design Request</h3>
+            
+            <form onSubmit={handleUpdateDesignRequest} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-authra-text-light dark:text-authra-text-sec-dark mb-1">Status</label>
+                <select 
+                  value={designUpdateForm.status}
+                  onChange={(e) => setDesignUpdateForm({...designUpdateForm, status: e.target.value})}
+                  className="w-full bg-authra-bg-light dark:bg-black border border-authra-border-light dark:border-authra-border-dark rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-steel text-authra-text-light dark:text-white"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-authra-text-light dark:text-authra-text-sec-dark mb-1">Feedback / Notes to User</label>
+                <textarea 
+                  value={designUpdateForm.adminFeedback}
+                  onChange={(e) => setDesignUpdateForm({...designUpdateForm, adminFeedback: e.target.value})}
+                  className="w-full bg-authra-bg-light dark:bg-black border border-authra-border-light dark:border-authra-border-dark rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-steel text-authra-text-light dark:text-white"
+                  rows="3"
+                  placeholder="Optional notes for the user..."
+                />
+              </div>
+
+              {designUpdateForm.status === 'completed' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-authra-text-light dark:text-authra-text-sec-dark mb-1">Template ID (Code)</label>
+                    <input 
+                      type="text" 
+                      value={designUpdateForm.templateId}
+                      onChange={(e) => setDesignUpdateForm({...designUpdateForm, templateId: e.target.value})}
+                      className="w-full bg-authra-bg-light dark:bg-black border border-authra-border-light dark:border-authra-border-dark rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-steel text-authra-text-light dark:text-white font-mono"
+                      placeholder="e.g. org-custom-01"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-authra-text-light dark:text-authra-text-sec-dark mb-1">Template Display Name</label>
+                    <input 
+                      type="text" 
+                      value={designUpdateForm.templateName}
+                      onChange={(e) => setDesignUpdateForm({...designUpdateForm, templateName: e.target.value})}
+                      className="w-full bg-authra-bg-light dark:bg-black border border-authra-border-light dark:border-authra-border-dark rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-steel text-authra-text-light dark:text-white"
+                      placeholder="e.g. Org Custom Design"
+                      required
+                    />
+                  </div>
+                </>
+              )}
+              
+              <div className="flex justify-end gap-3 pt-4 border-t border-authra-border-light dark:border-authra-border-dark mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => setUpdateDesignModal({ isOpen: false, request: null })}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-authra-text-sec-light hover:text-authra-text-light dark:text-authra-text-sec-dark dark:hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="bg-brand-steel hover:bg-brand-ice text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

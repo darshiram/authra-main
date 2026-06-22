@@ -206,6 +206,62 @@ export const getDesignRequests = async (req, res) => {
   }
 };
 
+// @desc    Update design request status
+// @route   PUT /api/v1/admin/design-requests/:id
+// @access  Private/Admin
+export const updateDesignRequestStatus = async (req, res) => {
+  try {
+    const { status, templateId, templateName } = req.body;
+    
+    if (!['pending', 'in-progress', 'completed', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const request = await DesignRequest.findById(req.params.id).populate('userId');
+    if (!request) {
+      return res.status(404).json({ message: 'Design request not found' });
+    }
+
+    request.status = status;
+    await request.save();
+
+    const user = request.userId; // populated
+
+    if (status === 'completed' && templateId && templateName) {
+      // Add custom template to user
+      const existingTemplate = user.customTemplates.find(t => t.id === templateId);
+      if (!existingTemplate) {
+        user.customTemplates.push({ id: templateId, name: templateName });
+        await user.save();
+      }
+
+      // Send email notification
+      const displayName = user.orgName || user.fullName || user.username || 'Organization';
+      await sendEmail({
+        email: user.email,
+        subject: 'Your Custom Certificate Design is Ready!',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+            <div style="background-color: #6366f1; padding: 20px; text-align: center;">
+              <h2 style="color: #ffffff; margin: 0;">Authra Custom Design</h2>
+            </div>
+            <div style="padding: 30px; background-color: #ffffff; color: #334155;">
+              <p>Hi ${displayName},</p>
+              <p>Great news! Your custom certificate design request has been completed.</p>
+              <p>Your new template <strong>${templateName}</strong> is now available in your Dashboard when issuing new certificates.</p>
+              <p style="margin-top: 30px; font-size: 12px; color: #94a3b8;">Thank you for using Authra!</p>
+            </div>
+          </div>
+        `
+      }).catch(err => console.error('Design completion email failed for', user.email, err));
+    }
+
+    res.json({ success: true, request });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // @desc    Get system logs
 // @route   GET /api/v1/admin/logs
 // @access  Private/Admin
