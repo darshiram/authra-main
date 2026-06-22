@@ -77,6 +77,7 @@ const userSchema = new mongoose.Schema({
   bannerUrl: { type: String, default: '' },
   aboutOrg: { type: String },
   gallery: [String],
+  isOfficial: { type: Boolean, default: false },
   customTemplates: [{
     id: String,
     name: String

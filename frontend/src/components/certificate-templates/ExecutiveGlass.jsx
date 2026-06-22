@@ -37,7 +37,10 @@ export default function ExecutiveGlass({ data }) {
               <Award className="w-7 h-7 text-white" />
             </div>
             <div>
-              <p className="font-serif text-2xl text-white tracking-wide">{issuerName}</p>
+              <p className="font-serif text-2xl text-white tracking-wide flex items-center gap-1.5">
+                {issuerName}
+                {data?.issuerIsOfficial && <ShieldCheck className="w-5 h-5 text-blue-400" title="Official Verified Organization" />}
+              </p>
               <p className="text-blue-300 text-xs tracking-widest uppercase mt-1">Excellence in Education</p>
             </div>
           </div>

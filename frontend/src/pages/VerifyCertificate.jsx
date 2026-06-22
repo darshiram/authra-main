@@ -71,7 +71,8 @@ export default function VerifyCertificate() {
 
   const renderTemplate = () => {
     const data = {
-      issuerName: certificate.issuerId?.name || 'Organization',
+      issuerName: certificate.issuerId?.orgName || certificate.issuerId?.fullName || 'Organization',
+      issuerIsOfficial: certificate.issuerId?.isOfficial || false,
       recipientName: certificate.recipientName,
       title: certificate.additionalDetails?.title || certificate.eventName || 'Certificate of Completion',
       eventName: certificate.additionalDetails?.eventName,

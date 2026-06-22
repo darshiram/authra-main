@@ -113,6 +113,16 @@ export default function AdminUserDetails() {
                       className="w-full bg-authra-bg-light dark:bg-black border border-authra-border-light dark:border-authra-border-dark rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-steel text-authra-text-light dark:text-white"
                     />
                   </div>
+                  <div className="flex items-center gap-3 h-full pt-6">
+                    <input 
+                      type="checkbox" 
+                      id="isOfficial"
+                      checked={user.isOfficial || false} 
+                      onChange={(e) => setUser({...user, isOfficial: e.target.checked})}
+                      className="w-5 h-5 accent-brand-steel rounded focus:ring-brand-steel"
+                    />
+                    <label htmlFor="isOfficial" className="text-sm font-medium text-authra-text-light dark:text-authra-text-sec-dark cursor-pointer">Official Verified Organization</label>
+                  </div>
                 </>
               ) : (
                 <>

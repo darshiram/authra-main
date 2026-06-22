@@ -186,7 +186,7 @@ export const getMyCertificates = async (req, res) => {
         { recipientUserId: req.user._id },
         { recipientEmail: req.user.email }
       ]
-    }).populate('issuerId', 'name profilePicture organizationDetails').sort({ issueDate: -1 });
+    }).populate('issuerId', 'fullName orgName profilePicture logoUrl isOfficial accountType').sort({ issueDate: -1 });
     
     res.json(certificates);
   } catch (error) {
@@ -201,7 +201,7 @@ export const getMyCertificates = async (req, res) => {
 export const getCertificateById = async (req, res) => {
   try {
     const certificate = await Certificate.findOne({ credentialId: req.params.credentialId })
-      .populate('issuerId', 'name profilePicture organizationDetails');
+      .populate('issuerId', 'fullName orgName profilePicture logoUrl isOfficial accountType');
       
     if (!certificate) {
       return res.status(404).json({ message: 'Certificate not found' });
@@ -242,7 +242,7 @@ export const getCertificatesByUsername = async (req, res) => {
         { recipientUserId: user._id },
         { recipientEmail: user.email }
       ]
-    }).populate('issuerId', 'name profilePicture organizationDetails').sort({ issueDate: -1 });
+    }).populate('issuerId', 'fullName orgName profilePicture logoUrl isOfficial accountType').sort({ issueDate: -1 });
     
     res.json(certificates);
   } catch (error) {

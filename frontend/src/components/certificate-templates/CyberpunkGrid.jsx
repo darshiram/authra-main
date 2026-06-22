@@ -36,7 +36,10 @@ export default function CyberpunkGrid({ data }) {
             <Activity className="w-8 h-8 text-cyan-400" />
           </div>
           <div>
-            <p className="font-bold text-xl text-cyan-50 tracking-wider">{issuerName}</p>
+            <p className="font-bold text-xl text-cyan-50 tracking-wider flex items-center gap-1.5">
+              {issuerName}
+              {data?.issuerIsOfficial && <ShieldCheck className="w-5 h-5 text-fuchsia-400" title="Official Verified Organization" />}
+            </p>
             <p className="text-xs text-cyan-500 tracking-[0.2em] mt-1">NODE_AUTHORITY_VERIFIED</p>
           </div>
         </div>

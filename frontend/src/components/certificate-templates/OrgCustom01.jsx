@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Hexagon } from 'lucide-react';
+import { Award, Hexagon, ShieldCheck } from 'lucide-react';
 import horizontalLogo from '../../assets/horziontal logo.png';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -38,7 +38,10 @@ export default function OrgCustom01({ data }) {
             <Hexagon className="w-6 h-6 text-amber-500" />
           </div>
           <div>
-            <p className="font-bold text-lg leading-tight tracking-tight text-white">{issuerName}</p>
+            <p className="font-bold text-lg leading-tight tracking-tight text-white flex items-center gap-1.5">
+              {issuerName}
+              {data?.issuerIsOfficial && <ShieldCheck className="w-4 h-4 text-amber-400" title="Official Verified Organization" />}
+            </p>
             <p className="text-[10px] text-amber-500/70 uppercase tracking-widest">Issuing Organization</p>
           </div>
         </div>

@@ -33,7 +33,10 @@ export default function ModernMinimalist({ data }) {
             <Hexagon className="w-6 h-6 text-brand-steel" />
           </div>
           <div>
-            <p className="font-bold text-lg leading-tight tracking-tight text-authra-text-light dark:text-white">{issuerName}</p>
+            <p className="font-bold text-lg leading-tight tracking-tight text-authra-text-light dark:text-white flex items-center gap-1.5">
+              {issuerName}
+              {data?.issuerIsOfficial && <ShieldCheck className="w-4 h-4 text-brand-periwinkle" title="Official Verified Organization" />}
+            </p>
             <p className="text-[10px] text-authra-text-sec-light dark:text-[#9AA8D6] uppercase tracking-widest">Issuing Organization</p>
           </div>
         </div>

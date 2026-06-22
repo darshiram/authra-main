@@ -123,10 +123,16 @@ export default function OrgProfile() {
                       {org.location}
                     </div>
                   )}
-                  <div className="flex items-center gap-1.5">
-                    <Award className="w-4 h-4" />
-                    Verified Issuer
-                  </div>
+                  {org.isOfficial ? (
+                    <div className="flex items-center gap-1.5 text-brand-periwinkle font-medium">
+                      <Award className="w-4 h-4" />
+                      Official Verified Organization
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      Organization
+                    </div>
+                  )}
                 </div>
               </div>
 
