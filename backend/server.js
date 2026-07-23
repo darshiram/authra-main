@@ -25,6 +25,9 @@ initCronJobs();
 
 const app = express();
 
+// Trust proxy is required for Express to set secure cookies behind a reverse proxy like Render
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json({
   verify: (req, res, buf) => {
